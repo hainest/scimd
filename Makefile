@@ -7,8 +7,6 @@ OPT 	   	 = -O3
 #ARCH		 = -xhost=native
 ARCH		 = -m64 -mfpmath=sse -march=native #-flto
 #OMP		:= -fopenmp
-#SANITIZER	:= address
-#LDFLAGS		:= -fuse-ld=gold #-flto
 
 .PHONY: all clean
 .DEFAULT_GOAL = all
@@ -17,6 +15,8 @@ SRCS := test.cpp
 OBJS := $(patsubst %.cpp, %.o, $(SRCS))
 EXEC := test
 
+debug: SANITIZER	:= address
+debug: LDFLAGS		:= -fuse-ld=gold
 debug: OPT 	   := -O0 -g -fno-omit-frame-pointer -fsanitize=$(SANITIZER)
 debug: LNFLAGS := -fsanitize=$(SANITIZER)
 debug: all
