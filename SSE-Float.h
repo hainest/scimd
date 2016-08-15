@@ -62,7 +62,7 @@ operator /(float a, T b) { return T(a) / b; }
 
 
 SSEFloat operator/(SSEFloat lhs, ck_simd::sqrt_proxy<SSEFloat> rhs) {
-	SSEFloat y0{rsqrt(rhs.value, SSEFloat::category())};
+	SSEFloat y0{ck_simd::rsqrt(rhs.value, SSEFloat::category())};
 
 	// Do a Newton-Raphson iteration to bring precision to ~23 bits
 	// Explicitly construct this to override the built-in operator* in libc++
@@ -75,7 +75,7 @@ SSEFloat operator/(SSEFloat lhs, ck_simd::sqrt_proxy<SSEFloat> rhs) {
  * 	ways. The constructor should be made `explicit`, but that could	break
  *	existing code. Use TMP to disable this overload.
  *
- *	In cmath, libstdc++ uses a `using` directive to pull in the global `sqrt` symbol
+ *	In cmath, libstdc++ uses a `using` declaration to pull in the global `sqrt` symbol
  *	which picks up this overload and conflicts with the template declaration
  *	there. Placing this version in an anaonymous namespace removes it from
  *	the global namespace.
