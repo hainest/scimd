@@ -2,7 +2,7 @@
 CXX 	   	 = g++
 #CXX			 = icc
 STD			 = -std=c++0x
-CXXFLAGS   	 = -Wall -Wextra #-Wshadow -Wnarrowing #-Wodr
+CXXFLAGS   	 = -Wall -Wextra -DCMK_USE_AVX -DCMK_USE_SSE2 #-Wshadow -Wnarrowing #-Wodr
 OPT 	   	 = -O3
 #ARCH		 = -xhost=native
 ARCH		 = -m64 -mfpmath=sse -march=native #-flto
