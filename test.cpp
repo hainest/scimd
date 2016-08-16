@@ -1,4 +1,3 @@
-#define CMK_USE_SSE2
 #include "SSE-Float.h"
 #include <iostream>
 #include <string>
@@ -31,8 +30,6 @@ int main(int argc, const char* argv[]) {
 
 	auto p1 = std::stof(argv[1]);
 	auto p2 = std::stof(argv[2]);
-
-//#define VERSION 3
 
 #if VERSION == 1
 	SSEFloat x{p1}, y{p2};
