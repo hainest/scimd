@@ -1,23 +1,9 @@
 #pragma once
 
 #include <xmmintrin.h>
+#include "cksimd_traits.h"
 
 namespace ck_simd {
-
-	struct sse_float_tag {};
-	struct sse_double_tag {};
-
-	template <typename T>
-	struct simd_category {};
-
-	template <> struct simd_category<float>  { typedef sse_float_tag type; };
-	template <> struct simd_category<double> { typedef sse_double_tag type; };
-
-	template <typename T>
-	struct simd_type {};
-
-	template <> struct simd_type<float>  { typedef __m128  type; };
-	template <> struct simd_type<double> { typedef __m128d type; };
 
 /**
  * 	Tag dispatch is used here because the gcc ABI before gcc-4.9
