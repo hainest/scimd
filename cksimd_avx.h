@@ -1,30 +1,14 @@
 #pragma once
 
 #include <immintrin.h>
+#include "cksimd_traits.h"
 
 namespace ck_simd {
-
-	struct avx_float_tag {};
-	struct avx_double_tag {};
-
-	template <typename T>
-	struct simd_category {};
-
-	template <> struct simd_category<float>  { typedef avx_float_tag type; };
-	template <> struct simd_category<double> { typedef avx_double_tag type; };
-
-	template <typename T>
-	struct simd_type {};
-
-	template <> struct simd_type<float>  { typedef __m256  type; };
-	template <> struct simd_type<double> { typedef __m256d type; };
 
 	/**
 	 * 	Tag dispatch is used here because the gcc ABI before gcc-4.9
 	 * 	does not properly mangle the SIMD types.
 	 */
-
-	__m256 sqrt(__m256 x, avx_float_tag) {
 		return _mm256_sqrt_ps(x);
 	}
 	__m256d sqrt(__m256d x, avx_double_tag) {
