@@ -43,11 +43,11 @@ struct SSEFloat {
  * 	type is in flight per translation unit.
  **/
 
-inline int movemask(SSEFloat a) { return _mm_movemask_ps(a.val); }
-inline void storeu(float *p, SSEFloat a) { _mm_storeu_ps(p,a.val); }
+inline int movemask(SSEFloat a) { return ck_simd::movemask(a.val, SSEFloat::category()); }
+inline void storeu(float *p, SSEFloat a) { ck_simd::storeu(p, a.val, SSEFloat::category()); }
 
-inline SSEFloat max (SSEFloat a, SSEFloat b) { return _mm_max_ps(a.val, b.val); }
-inline SSEFloat min (SSEFloat a, SSEFloat b) { return _mm_min_ps(a.val, b.val); }
+inline SSEFloat max (SSEFloat a, SSEFloat b) { return ck_simd::max(a.val, b.val, SSEFloat::category()); }
+inline SSEFloat min (SSEFloat a, SSEFloat b) { return ck_simd::min(a.val, b.val, SSEFloat::category()); }
 
 inline SSEFloat operator +(float a, SSEFloat b) { return SSEFloat(a) + b; }
 inline SSEFloat operator -(float a, SSEFloat b) { return SSEFloat(a) - b; }

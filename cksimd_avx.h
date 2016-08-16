@@ -1,9 +1,23 @@
 #pragma once
 
 #include <immintrin.h>
-#include "cksimd_traits.h"
 
 namespace ck_simd {
+
+	template <typename T>
+	struct simd_category {};
+
+	template <typename T>
+	struct simd_type {};
+
+	struct avx_float_tag {};
+	struct avx_double_tag {};
+
+	template <> struct simd_category<float>  { typedef avx_float_tag type; };
+	template <> struct simd_category<double> { typedef avx_double_tag type; };
+
+	template <> struct simd_type<float>  { typedef __m256  type; };
+	template <> struct simd_type<double> { typedef __m256d type; };
 
 	/**
 	 * 	Tag dispatch is used here because the gcc ABI before gcc-4.9
@@ -29,6 +43,9 @@ namespace ck_simd {
 	}
 	__m256d set1(double x, avx_double_tag) {
 		return _mm256_set1_pd(x);
+	}
+	__m256 setr(float x, float y, float z, float w, avx_float_tag) {
+		return _mm256_setr_ps(x, y, z, w, 0.0f, 0.0f, 0.0f, 0.0f);
 	}
 	__m256 setr(float x, float y, float z, float w,
 				float a, float b, float c, float d, avx_float_tag) {
@@ -117,4 +134,29 @@ namespace ck_simd {
 	__m256d equals(__m256d x, __m256d y, avx_double_tag) {
 		return _mm256_cmp_pd(x, y, _CMP_EQ_OQ);
 	}
+	int movemask(__m256 x, avx_float_tag) {
+		return _mm256_movemask_ps(x);
+	}
+	int movemask(__m256d x, avx_double_tag) {
+		return _mm256_movemask_pd(x);
+	}
+	void storeu(float *p, __m256 x, avx_float_tag) {
+			_mm256_storeu_ps(p, x);
+	}
+	void storeu(double *p, __m256d x, avx_double_tag) {
+			_mm256_storeu_pd(p, x);
+	}
+	__m256 max(__m256 x, __m256 y, avx_float_tag) {
+		return _mm256_max_ps(x, y);
+	}
+	__m256d max(__m256d x, __m256d y, avx_double_tag) {
+		return _mm256_max_pd(x, y);
+	}
+	__m256 min(__m256 x, __m256 y, avx_float_tag) {
+		return _mm256_min_ps(x, y);
+	}
+	__m256d min(__m256d x, __m256d y, avx_double_tag) {
+		return _mm256_min_pd(x, y);
+	}
+
 };
