@@ -119,16 +119,28 @@ namespace ck_simd {
 	__m128d greater(__m128d x, __m128d y, sse_double_tag) {
 		return _mm_cmpgt_pd(x, y);
 	}
+	__m128 less_eq(__m128 x, __m128 y, sse_float_tag) {
+		return _mm_cmple_ps(x, y);
+	}
+	__m128d less_eq(__m128d x, __m128d y, sse_double_tag) {
+		return _mm_cmple_pd(x, y);
+	}
+	__m128 greater_eq(__m128 x, __m128 y, sse_float_tag) {
+		return _mm_cmpge_ps(x, y);
+	}
+	__m128d greater_eq(__m128d x, __m128d y, sse_double_tag) {
+		return _mm_cmpge_pd(x, y);
+	}
 	__m128 equals(__m128 x, __m128 y, sse_float_tag) {
 		return _mm_cmpeq_ps(x, y);
 	}
 	__m128d equals(__m128d x, __m128d y, sse_double_tag) {
 		return _mm_cmpeq_pd(x, y);
 	}
-	__m128 movemask(__m128 x, sse_float_tag) {
+	int movemask(__m128 x, sse_float_tag) {
 		return _mm_movemask_ps(x);
 	}
-	__m128d movemask(__m128d x, sse_double_tag) {
+	int movemask(__m128d x, sse_double_tag) {
 		return _mm_movemask_pd(x);
 	}
 	void storeu(float *p, __m128 x, sse_float_tag) {
