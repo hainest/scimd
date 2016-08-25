@@ -13,7 +13,12 @@ struct SSEFloat {
 	SSEFloat() 		 	: val(ck_simd::zero(category())) {}
 	SSEFloat(simd_t x)	: val(x) {}
 	SSEFloat(value_type x)	: val(ck_simd::set1(x, category())) {}
-	SSEFloat(value_type f0, value_type f1,value_type f2, value_type f3)
+
+	template <typename U, typename =
+			typename std::enable_if<
+				  std::is_convertible<U,value_type>::value &&
+				 !ck_simd::is_scalar<category>::value, U>::type>
+	SSEFloat(U f0, U f1, U f2, U f3)
 		: val(ck_simd::setr(f0,f1,f2,f3, category())) {}
 	operator simd_t() { return val; }
 
