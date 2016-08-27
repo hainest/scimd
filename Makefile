@@ -1,19 +1,20 @@
-#CXX 	   	 = clang++
-CXX 	   	 = g++
-#CXX			 = icc
-STD			 = -std=c++0x
-CXXFLAGS   	 = -Wall -Wextra -DCMK_USE_AVX -DCMK_USE_SSE2 #-Wshadow -Wnarrowing #-Wodr
-OPT 	   	 = -O3
-#ARCH		 = -xhost=native
-ARCH		 = -m64 -mfpmath=sse -march=native #-flto
-#OMP		:= -fopenmp
+STD		 = -std=c++0x
+CXXFLAGS = -Wall -Wextra
+OPT    	 = -O3
+ARCH	 = -m64 -mfpmath=sse
 
 .PHONY: all clean
 .DEFAULT_GOAL = all
 
-SRCS := test.cpp
+SRCS := simd_test.cpp
 OBJS := $(patsubst %.cpp, %.o, $(SRCS))
 EXEC := test
+
+sse: CXXFLAGS += -DCMK_USE_SSE2 -msse4
+sse: all
+
+avx: CXXFLAGS += -DCMK_USE_AVX -mavx
+avx: all
 
 debug: SANITIZER	:= address
 debug: LDFLAGS		:= -fuse-ld=gold

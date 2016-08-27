@@ -10,16 +10,19 @@
 #include "cksimd_avx.h"
 #elif defined(__SSE2__) && defined(CMK_USE_SSE2)
 #include "cksimd_sse.h"
+#else
+#include "cksimd_scalar.h"
 #endif
 
 namespace ck_simd {
 
+// NOTE: gcc-4.4 at -O2 cannot see through these abstractions
 	template <typename T>
 	struct sqrt_proxy {
 		T value;
 		explicit sqrt_proxy(T x) : value{x} {}
 		operator T() {
-			return sqrt(value, typename T::category());
+			return sqrt(value(), typename T::category());
 		}
 	};
 
