@@ -7,48 +7,80 @@ struct SSEDouble {
 	typedef double value_type;
 	typedef ck_simd::simd_category<value_type>::type category;
 	typedef ck_simd::simd_type<value_type>::type simd_t;
+	static const size_t size = sizeof(simd_t);
 
 	simd_t val;
-	SSEDouble()			: val(ck_simd::zero(category())) {}
+	SSEDouble() 		: val(ck_simd::zero(category())) {}
 	SSEDouble(simd_t x)	: val(x) {}
-	SSEDouble(value_type x)	: val(ck_simd::set1(x, category())) {}
-//	SSEDouble(value_type f0, value_type f1,value_type f2, value_type f3)
+
+	explicit operator simd_t() { return val; }
+
+	template <typename U, typename =
+			typename std::enable_if<
+				  std::is_floating_point<U>::value &&
+				 !ck_simd::is_scalar<category()>::value, U>::type>
+	SSEDouble(U x) : val(ck_simd::set1(x, category())) {}
+
+	/*
+	 * 	Please don't use this constructor as it breaks genericity. It is only
+	 *	here for backwards compatibility with the legacy interface.
+	 */
+//	template <typename U, typename =
+//			typename std::enable_if<!ck_simd::is_scalar<category()>::value, U>::type>
+//	SSEDouble(U f0, U f1, U f2, U f3)
 //		: val(ck_simd::setr(f0,f1,f2,f3, category())) {}
-	operator simd_t() { return val; }
 
-	SSEDouble operator -()			{ return ck_simd::neg(val,			category()); }
-	SSEDouble operator +(SSEDouble a) { return ck_simd::add(val, a.val, category()); }
-	SSEDouble operator -(SSEDouble a) { return ck_simd::sub(val, a.val, category()); }
-	SSEDouble operator *(SSEDouble a) { return ck_simd::mul(val, a.val, category()); }
-	SSEDouble operator /(SSEDouble a) { return ck_simd::div(val, a.val, category()); }
+	simd_t operator()() { return val; }
+	SSEDouble operator -()			{ return ck_simd::neg(val,		  category()); }
+	SSEDouble operator +(SSEDouble x) { return ck_simd::add(val, x.val, category()); }
+	SSEDouble operator -(SSEDouble x) { return ck_simd::sub(val, x.val, category()); }
+	SSEDouble operator *(SSEDouble x) { return ck_simd::mul(val, x.val, category()); }
+	SSEDouble operator /(SSEDouble x) { return ck_simd::div(val, x.val, category()); }
 
-	SSEDouble operator +=(SSEDouble a) { val = ck_simd::add(val, a.val, category()); return *this; }
-	SSEDouble operator -=(SSEDouble a) { val = ck_simd::sub(val, a.val, category()); return *this; }
-	SSEDouble operator *=(SSEDouble a) { val = ck_simd::mul(val, a.val, category()); return *this; }
-	SSEDouble operator /=(SSEDouble a) { val = ck_simd::div(val, a.val, category()); return *this; }
+	SSEDouble operator +=(SSEDouble x) { val = ck_simd::add(val, x.val, category()); return *this; }
+	SSEDouble operator -=(SSEDouble x) { val = ck_simd::sub(val, x.val, category()); return *this; }
+	SSEDouble operator *=(SSEDouble x) { val = ck_simd::mul(val, x.val, category()); return *this; }
+	SSEDouble operator /=(SSEDouble x) { val = ck_simd::div(val, x.val, category()); return *this; }
 
 	/*Masking Operators*/
-	SSEDouble operator &(SSEDouble a) { return ck_simd::bitwise_and (a.val, val, category()); }
-	SSEDouble operator |(SSEDouble a) { return ck_simd::bitwise_or  (a.val, val, category()); }
-	SSEDouble operator ^(SSEDouble a) { return ck_simd::bitwise_xor (a.val, val, category()); }
-	SSEDouble andnot    (SSEDouble a) { return ck_simd::andnot		(a.val, val, category()); }
+	SSEDouble operator &(SSEDouble x) { return ck_simd::mask_and	  (x.val, val, category()); }
+	SSEDouble operator |(SSEDouble x) { return ck_simd::mask_or	  (x.val, val, category()); }
+	SSEDouble operator ^(SSEDouble x) { return ck_simd::mask_xor	  (x.val, val, category()); }
+	SSEDouble andnot    (SSEDouble x) { return ck_simd::mask_andnot (x.val, val, category()); }
 
-	SSEDouble operator < (SSEDouble a) { return ck_simd::less	 (a.val, val, category()); }
-	SSEDouble operator > (SSEDouble a) { return ck_simd::greater (a.val, val, category()); }
-	SSEDouble operator ==(SSEDouble a) { return ck_simd::equals  (a.val, val, category()); }
+	SSEDouble operator &=(SSEDouble x) { val = ck_simd::mask_and (x.val, val, category()); return *this; }
+	SSEDouble operator |=(SSEDouble x) { val = ck_simd::mask_or  (x.val, val, category()); return *this; }
+	SSEDouble operator ^=(SSEDouble x) { val = ck_simd::mask_xor (x.val, val, category()); return *this; }
 
-	friend int movemask(SSEDouble a) { return ck_simd::movemask(a.val, SSEDouble::category()); }
-	friend void storeu(value_type *p, SSEDouble a) { ck_simd::storeu(p, a.val, SSEDouble::category()); }
+	SSEDouble operator < (SSEDouble x) { return ck_simd::less			(x.val, val, category()); }
+	SSEDouble operator > (SSEDouble x) { return ck_simd::greater		(x.val, val, category()); }
+	SSEDouble operator ==(SSEDouble x) { return ck_simd::equals		(x.val, val, category()); }
+	SSEDouble operator <=(SSEDouble x) { return ck_simd::less_eq		(x.val, val, category()); }
+	SSEDouble operator >=(SSEDouble x) { return ck_simd::greater_eq	(x.val, val, category()); }
 
-	friend SSEDouble max (SSEDouble a, SSEDouble b) { return ck_simd::max(a.val, b.val, SSEDouble::category()); }
-	friend SSEDouble min (SSEDouble a, SSEDouble b) { return ck_simd::min(a.val, b.val, SSEDouble::category()); }
+	friend int		movemask(SSEDouble x)				{ return ck_simd::movemask(x.val, SSEDouble::category()); }
+	friend void 	storeu	(value_type *p, SSEDouble x)	{ ck_simd::storeu(p, x.val, SSEDouble::category()); }
+	friend SSEDouble loadu	(value_type *p)				{ return ck_simd::loadu(p, SSEDouble::category()); }
 
-	friend SSEDouble operator +(value_type a, SSEDouble b) { return SSEDouble(a) + b; }
-	friend SSEDouble operator -(value_type a, SSEDouble b) { return SSEDouble(a) - b; }
-	friend SSEDouble operator *(value_type a, SSEDouble b) { return SSEDouble(a) * b; }
+	friend SSEDouble max (SSEDouble x, SSEDouble b) { return ck_simd::max(x.val, b.val, SSEDouble::category()); }
+	friend SSEDouble min (SSEDouble x, SSEDouble b) { return ck_simd::min(x.val, b.val, SSEDouble::category()); }
 
-	friend SSEDouble operator /(value_type a, SSEDouble b) { return SSEDouble(a) / b; }
+	friend SSEDouble operator +(value_type x, SSEDouble b) { return SSEDouble(x) + b; }
+	friend SSEDouble operator -(value_type x, SSEDouble b) { return SSEDouble(x) - b; }
+	friend SSEDouble operator *(value_type x, SSEDouble b) { return SSEDouble(x) * b; }
 };
+
+/**
+ *  The TMP here is is just to disambiguate this from operator/ with a sqrt_proxy<SSEDouble>
+ */
+template <typename T>
+inline typename std::enable_if<std::is_same<T, SSEDouble>::value, SSEDouble>::type
+operator /(float a, T b) { return T(a) / b; }
+
+
+SSEDouble operator/(SSEDouble lhs, ck_simd::sqrt_proxy<SSEDouble> rhs) {
+	return lhs * ck_simd::rsqrt(rhs.value(), SSEDouble::category());
+}
 
 /**
  * 	The converting constructor for in SSEDouble enables this overload in dangerous

@@ -1,17 +1,9 @@
 #pragma once
 
 #include <xmmintrin.h>
+#include "cksimd_traits.h"
 
 namespace ck_simd {
-
-	template <typename T>
-	struct simd_category {};
-
-	template <typename T>
-	struct simd_type {};
-
-	struct sse_float_tag {};
-	struct sse_double_tag {};
 
 	template <> struct simd_category<float>  { typedef sse_float_tag type; };
 	template <> struct simd_category<double> { typedef sse_double_tag type; };
@@ -33,7 +25,7 @@ namespace ck_simd {
 		return _mm_rsqrt_ps(x);
 	}
 	inline __m128d rsqrt(__m128d x, sse_double_tag) {
-		return _mm_div_pd(_mm_set1_pd(1.0), x);
+		return _mm_div_pd(_mm_set1_pd(1.0), _mm_sqrt_pd(x));
 	}
 	inline __m128 zero(sse_float_tag) {
 		return _mm_setzero_ps();
@@ -83,28 +75,28 @@ namespace ck_simd {
 	inline __m128d div(__m128d x, __m128d y, sse_double_tag) {
 		return _mm_div_pd(x, y);
 	}
-	inline __m128 bitwise_and(__m128 x, __m128 y, sse_float_tag) {
+	inline __m128 mask_and(__m128 x, __m128 y, sse_float_tag) {
 		return _mm_and_ps(x, y);
 	}
-	inline __m128d bitwise_and(__m128d x, __m128d y, sse_double_tag) {
+	inline __m128d mask_and(__m128d x, __m128d y, sse_double_tag) {
 		return _mm_and_pd(x, y);
 	}
-	inline __m128 bitwise_or(__m128 x, __m128 y, sse_float_tag) {
+	inline __m128 mask_or(__m128 x, __m128 y, sse_float_tag) {
 		return _mm_or_ps(x, y);
 	}
-	inline __m128d bitwise_or(__m128d x, __m128d y, sse_double_tag) {
+	inline __m128d mask_or(__m128d x, __m128d y, sse_double_tag) {
 		return _mm_or_pd(x, y);
 	}
-	inline __m128 bitwise_xor(__m128 x, __m128 y, sse_float_tag) {
+	inline __m128 mask_xor(__m128 x, __m128 y, sse_float_tag) {
 		return _mm_xor_ps(x, y);
 	}
-	inline __m128d bitwise_xor(__m128d x, __m128d y, sse_double_tag) {
+	inline __m128d mask_xor(__m128d x, __m128d y, sse_double_tag) {
 		return _mm_xor_pd(x, y);
 	}
-	inline __m128 andnot(__m128 x, __m128 y, sse_float_tag) {
+	inline __m128 mask_andnot(__m128 x, __m128 y, sse_float_tag) {
 		return _mm_andnot_ps(x, y);
 	}
-	inline __m128d andnot(__m128d x, __m128d y, sse_double_tag) {
+	inline __m128d mask_andnot(__m128d x, __m128d y, sse_double_tag) {
 		return _mm_andnot_pd(x, y);
 	}
 	inline __m128 less(__m128 x, __m128 y, sse_float_tag) {
@@ -160,5 +152,11 @@ namespace ck_simd {
 	}
 	inline __m128d min(__m128d x, __m128d y, sse_double_tag) {
 		return _mm_min_pd(x, y);
+	}
+	inline __m128 loadu(float const* p, sse_float_tag) {
+		return _mm_loadu_ps(p);
+	}
+	inline __m128d loadu(double const* p, sse_double_tag) {
+		return _mm_loadu_pd(p);
 	}
 };
