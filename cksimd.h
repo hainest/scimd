@@ -22,7 +22,7 @@ namespace ck_simd {
 		T value;
 		explicit sqrt_proxy(T x) : value{x} {}
 		operator T() {
-			return sqrt(value(), typename T::category());
+			return sqrt(value.val, typename T::category());
 		}
 	};
 

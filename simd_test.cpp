@@ -16,12 +16,12 @@ union mask_t {
 };
 template <typename T>
 struct mask {};
-template <> struct mask<float>  { using type = maskf_t; };
-template <> struct mask<double> { using type = mask_t; };
+template <> struct mask<float>  { typedef maskf_t type; };
+template <> struct mask<double> { typedef mask_t type; };
 template <typename T>
 bool to_bool(T *x, size_t n) {
 	uint32_t r{0};
-	using mask_type = typename mask<T>::type;
+	typedef typename mask<T>::type mask_type;
 	for(size_t i=0; i<n; ++i) {
 		r |= mask_type(x[i]).i;
 	}
@@ -29,7 +29,7 @@ bool to_bool(T *x, size_t n) {
 }
 template <typename T>
 bool to_bool(T f) {
-	using value_type = typename T::value_type;
+	typedef typename T::value_type value_type;
 	value_type *x = reinterpret_cast<value_type*>(&(f.val));
 	return to_bool(x, T::size);
 }
