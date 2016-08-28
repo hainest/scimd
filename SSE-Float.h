@@ -8,12 +8,11 @@ struct SSEFloat {
 	typedef ck_simd::simd_category<value_type>::type category;
 	typedef ck_simd::simd_type<value_type>::type simd_t;
 	static const size_t size = sizeof(simd_t);
+	static const size_t nelem = size / sizeof(value_type);
 
 	simd_t val;
 	SSEFloat() 		 	: val(ck_simd::zero(category())) {}
 	SSEFloat(simd_t x)	: val(x) {}
-
-	explicit operator simd_t() { return val; }
 
 	template <typename U, typename =
 			typename std::enable_if<
@@ -21,16 +20,28 @@ struct SSEFloat {
 				 !ck_simd::is_scalar<category()>::value, U>::type>
 	SSEFloat(U x) : val(ck_simd::set1(x, category())) {}
 
-	/*
-	 * 	Please don't use this constructor as it breaks genericity. It is only
-	 *	here for backwards compatibility with the legacy interface.
+	/**
+	 * 	\deprecated{This constructor exists solely for backwards compatibility}
 	 */
-//	template <typename U, typename =
-//			typename std::enable_if<!ck_simd::is_scalar<category()>::value, U>::type>
-//	SSEFloat(U f0, U f1, U f2, U f3)
-//		: val(ck_simd::setr(f0,f1,f2,f3, category())) {}
+	template <typename U>
+	SSEFloat(U f0, U f1, U f2, U f3,
+			typename std::enable_if<
+			std::is_floating_point<U>::value   &&
+			ck_simd::is_sse<category()>::value &&
+			std::is_same<value_type, float>::value, U>::type* = 0)
+		: val(ck_simd::setr(f0,f1,f2,f3, category())) {}
 
-	simd_t operator()() { return val; }
+	/**
+	 * 	\deprecated{This constructor exists solely for backwards compatibility}
+	 */
+	template <typename U>
+	SSEFloat(U f0, U f1, U f2, U f3, U f4, U f5, U f6, U f7,
+			typename std::enable_if<
+			std::is_floating_point<U>::value   &&
+			ck_simd::is_avx<category()>::value &&
+			std::is_same<value_type, float>::value, U>::type* =0)
+		: val(ck_simd::setr(f0,f1,f2,f3,f4,f5,f6,f7, category())) {}
+
 	SSEFloat operator -()			{ return ck_simd::neg(val,		  category()); }
 	SSEFloat operator +(SSEFloat x) { return ck_simd::add(val, x.val, category()); }
 	SSEFloat operator -(SSEFloat x) { return ck_simd::sub(val, x.val, category()); }
@@ -86,7 +97,7 @@ operator /(float a, T b) { return T(a) / b; }
  * 		  a reciprocal intrinsic, so there is no optimization for DP.
  */
 SSEFloat operator/(SSEFloat lhs, ck_simd::sqrt_proxy<SSEFloat> rhs) {
-	SSEFloat y0{ck_simd::rsqrt(rhs.value(), SSEFloat::category())};
+	SSEFloat y0{ck_simd::rsqrt(rhs.value.val, SSEFloat::category())};
 
 	// Do a Newton-Raphson iteration to bring precision to ~23 bits
 	// Explicitly construct this to override the built-in operator* in libc++

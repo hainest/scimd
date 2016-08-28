@@ -13,24 +13,34 @@ struct SSEDouble {
 	SSEDouble() 		: val(ck_simd::zero(category())) {}
 	SSEDouble(simd_t x)	: val(x) {}
 
-	explicit operator simd_t() { return val; }
-
 	template <typename U, typename =
 			typename std::enable_if<
 				  std::is_floating_point<U>::value &&
 				 !ck_simd::is_scalar<category()>::value, U>::type>
 	SSEDouble(U x) : val(ck_simd::set1(x, category())) {}
 
-	/*
-	 * 	Please don't use this constructor as it breaks genericity. It is only
-	 *	here for backwards compatibility with the legacy interface.
+	/**
+	 * 	\deprecated{This constructor exists solely for backwards compatibility}
 	 */
-//	template <typename U, typename =
-//			typename std::enable_if<!ck_simd::is_scalar<category()>::value, U>::type>
-//	SSEDouble(U f0, U f1, U f2, U f3)
-//		: val(ck_simd::setr(f0,f1,f2,f3, category())) {}
+	template <typename U>
+	SSEDouble(U f0, U f1,
+			typename std::enable_if<
+			std::is_floating_point<U>::value   &&
+			ck_simd::is_sse<category()>::value &&
+			std::is_same<value_type, double>::value, U>::type* = 0)
+		: val(ck_simd::setr(f0, f1, category())) {}
 
-	simd_t operator()() { return val; }
+	/**
+	 * 	\deprecated{This constructor exists solely for backwards compatibility}
+	 */
+	template <typename U>
+	SSEDouble(U f0, U f1, U f2, U f3,
+			typename std::enable_if<
+			std::is_floating_point<U>::value   &&
+			ck_simd::is_avx<category()>::value &&
+			std::is_same<value_type, double>::value, U>::type* =0)
+		: val(ck_simd::setr(f0, f1, f2, f3, category())) {}
+
 	SSEDouble operator -()			{ return ck_simd::neg(val,		  category()); }
 	SSEDouble operator +(SSEDouble x) { return ck_simd::add(val, x.val, category()); }
 	SSEDouble operator -(SSEDouble x) { return ck_simd::sub(val, x.val, category()); }
@@ -79,7 +89,7 @@ operator /(float a, T b) { return T(a) / b; }
 
 
 SSEDouble operator/(SSEDouble lhs, ck_simd::sqrt_proxy<SSEDouble> rhs) {
-	return lhs * ck_simd::rsqrt(rhs.value(), SSEDouble::category());
+	return lhs * ck_simd::rsqrt(rhs.value.val, SSEDouble::category());
 }
 
 /**
