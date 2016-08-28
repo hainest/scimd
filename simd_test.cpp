@@ -1,5 +1,6 @@
 #include "SSE-Float.h"
 #include "SSE-Double.h"
+#include "cksimd.h"
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -55,11 +56,30 @@ void combine(SSEDouble &f, bool v) {
 	f &= SSEDouble(double(v));
 }
 
+template <typename T>
+std::ostream& operator<<(std::ostream &o, cksimd<T> f) {
+	typedef typename cksimd<T>::value_type value_type;
+	value_type *x = reinterpret_cast<value_type*>(&(f.val));
+	o << '{' << x[0];
+	if(cksimd<T>::nelem >= 2) {
+		o << ' ' << x[1];
+		if(cksimd<T>::nelem >= 4) {
+			o << ' ' << x[2] << ' ' << x[3];
+			if(cksimd<T>::nelem == 8) {
+				o << ' ' << x[4] << ' ' << x[5]
+				  << ' ' << x[6] << ' ' << x[7];
+			}
+		}
+	}
+	return o << '}';
+}
 template <typename T, typename U>
 void test(T x, U y, char const* name, answer<T,U> const& ans) {
 	std::cout << std::setw(20) << std::left << name << ": ";
+	asm volatile("sqrt_begin%=:" :);
 	auto srty = U(sqrt(y));
 	auto rsrt = x / sqrt(y);
+	asm volatile("sqrt_end%=:" :);
 	auto a = ((x + y) == ans.sum ) &
 			 ((x - y) == ans.diff) &
 			 ((x * y) == ans.prod) &
