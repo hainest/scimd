@@ -10,7 +10,7 @@ SRCS := simd_test.cpp
 OBJS := $(patsubst %.cpp, %.o, $(SRCS))
 EXEC := test
 
-sse: CXXFLAGS += -DCMK_USE_SSE2 -msse4
+sse: CXXFLAGS += -DCMK_USE_SSE2 -msse2
 sse: all
 
 avx: CXXFLAGS += -DCMK_USE_AVX -mavx
@@ -25,10 +25,10 @@ debug: all
 all: $(EXEC)
 
 %.o : %.cpp Makefile
-	@$(CXX) $(STD) $(CXXFLAGS) $(OPT) $(ARCH) $(OMP) -c -o $@ $<
+	@ $(CXX) $(STD) $(CXXFLAGS) $(OPT) $(ARCH) $(OMP) -c -o $@ $<
 
 $(EXEC) : $(OBJS)
-	@$(CXX) -o $@ $< $(LNFLAGS) $(OMP) $(LDFLAGS)
+	@ $(CXX) -o $@ $< $(LNFLAGS) $(OMP) $(LDFLAGS)
 
 clean:
 	@ rm -f $(OBJS) $(EXEC)
