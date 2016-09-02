@@ -50,6 +50,9 @@ struct cksimd {
 
 	/**
 	 * 	\deprecated{This constructor exists solely for backwards compatibility}
+	 *
+	 * 	Note: Do not use this constructor as it breaks genericity. Use the loadu
+	 * 		  member function to populate values.
 	 */
 	template <typename U, typename =
 			  typename std::enable_if<std::is_floating_point<U>::value && nelem == 2, U>::type>
@@ -57,19 +60,14 @@ struct cksimd {
 
 	/**
 	 * 	\deprecated{This constructor exists solely for backwards compatibility}
+	 *
+	 * 	Note: Do not use this constructor as it breaks genericity. Use the loadu
+	 * 		  member function to populate values.
 	 */
 	template <typename U, typename =
 			  typename std::enable_if<std::is_floating_point<U>::value && nelem == 4, U>::type>
 	cksimd(U f0, U f1, U f2, U f3)
 		: val(ck_simd::setr(f0, f1, f2, f3, category())) {}
-
-	/**
-	 * 	\deprecated{This constructor exists solely for backwards compatibility}
-	 */
-	template <typename U, typename =
-			  typename std::enable_if<std::is_floating_point<U>::value && nelem == 8, U>::type>
-	cksimd(U f0, U f1, U f2, U f3, U f4, U f5, U f6, U f7)
-		: val(ck_simd::setr(f0, f1, f2, f3, f4, f5, f6, f7, category())) {}
 
 	cksimd operator -()			{ return ck_simd::neg(val,		  category()); }
 	cksimd operator +(cksimd x) { return ck_simd::add(val, x.val, category()); }
@@ -98,9 +96,14 @@ struct cksimd {
 	cksimd operator <=(cksimd x) { return ck_simd::less_eq	  (x.val, val, category()); }
 	cksimd operator >=(cksimd x) { return ck_simd::greater_eq (x.val, val, category()); }
 
-	friend void   storeu  (value_type *p, cksimd x)	{ ck_simd::storeu(p, x.val, cksimd::category()); }
-	friend int    movemask(cksimd x) 				{ return ck_simd::movemask(x.val, cksimd::category()); }
-	friend cksimd loadu   (value_type *p) 			{ return ck_simd::loadu(p, cksimd::category()); }
+	friend void storeu(value_type *p, cksimd x)	{ ck_simd::storeu(p, x.val, cksimd::category()); }
+
+	friend void storel(value_type *p, cksimd x) { _mm_storel_pd(p,x.val);}
+	friend void storeh(value_type *p, cksimd x) { _mm_storeh_pd(p,x.val);}
+
+
+	friend int    movemask(cksimd x)	 { return ck_simd::movemask(x.val, cksimd::category()); }
+	friend cksimd loadu   (value_type *p){ return ck_simd::loadu(p, cksimd::category()); }
 
 	friend cksimd max (cksimd x, cksimd b) { return ck_simd::max(x.val, b.val, cksimd::category()); }
 	friend cksimd min (cksimd x, cksimd b) { return ck_simd::min(x.val, b.val, cksimd::category()); }
@@ -112,7 +115,7 @@ struct cksimd {
 	/*
 	 * 	This is really the reciprocal square root function. Using a proxy object
 	 * 	allows code like `T x(4.0), y(1.0/sqrt(x));` to work correctly for
-	 * 	all types and use the rsqrt optimization for T=SSEFloat.
+	 * 	all types and use the rsqrt optimization for T=cksimd<float>.
 	 *
 	 * 	Note: There is no rsqrt intrinsic for double-precision. There isn't even
 	 * 		  a reciprocal intrinsic, so there is no optimization for DP.
