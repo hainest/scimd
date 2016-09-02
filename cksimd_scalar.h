@@ -50,6 +50,9 @@ namespace ck_simd {
 	inline float zero(scalar_float_tag) {
 		return 0.0f;
 	}
+	inline double zero(scalar_double_tag) {
+		return 0.0;
+	}
 	inline float set1(float x, scalar_float_tag) {
 		return x;
 	}
@@ -61,9 +64,6 @@ namespace ck_simd {
 	}
 	inline double setr(double x, scalar_double_tag) {
 		return x;
-	}
-	inline double zero(scalar_double_tag) {
-		return 0.0;
 	}
 	inline float neg(float x, scalar_float_tag) {
 		return -x;
@@ -114,10 +114,10 @@ namespace ck_simd {
 		return mask_t(mask_t(x).i ^ mask_t(y).i).d;
 	}
 	inline float mask_andnot(float x, float y, scalar_float_tag) {
-		return maskf_t(maskf_t(x).i & ~(maskf_t(y).i)).f;
+		return maskf_t(~(maskf_t(x).i) & maskf_t(y).i).f;
 	}
 	inline double mask_andnot(double x, double y, scalar_double_tag) {
-		return mask_t(mask_t(x).i & ~(mask_t(y).i)).d;
+		return mask_t(~(mask_t(x).i) & mask_t(y).i).d;
 	}
 	inline float less(float x, float y, scalar_float_tag) {
 		return (x < y) ? maskf_t(true_mask_float).f : 0;
@@ -152,16 +152,16 @@ namespace ck_simd {
 	inline int movemask(float x, scalar_float_tag) {
 		/**
 		 *  Emulate the movmskps instruction.
-		 * 	Extract the sign bit from x and format it into a 2-bit mask
+		 * 	Extract the sign bit from x and format it into a 4-bit mask
 		 */
-		return (x < 0.0f) ? 0x3 : 0;
+		return (x < 0.0f) ? 0xf : 0;
 	}
 	inline int movemask(double x, scalar_double_tag) {
 		/**
 		 *  Emulate the movmskpd instruction.
-		 * 	Extract the sign bit from x and format it into a 4-bit mask
+		 * 	Extract the sign bit from x and format it into a 2-bit mask
 		 */
-		return (x < 0.0) ? 0xf : 0;
+		return (x < 0.0) ? 0x3 : 0;
 	}
 	inline void storeu(float *p, float x, scalar_float_tag) {
 		*p = x;
