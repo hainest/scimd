@@ -55,7 +55,6 @@ template<>
 void combine(SSEDouble &f, bool v) {
 	f &= SSEDouble(double(v));
 }
-
 template <typename T>
 std::ostream& operator<<(std::ostream &o, cksimd<T> f) {
 	typedef typename cksimd<T>::value_type value_type;
