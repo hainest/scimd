@@ -6,7 +6,8 @@ ARCH	 = -m64 -mfpmath=sse
 .PHONY: all clean
 .DEFAULT_GOAL = all
 
-SRCS := simd_test.cpp
+#SRCS := simd_test.cpp
+SRCS := cksimd_test_legacy.cpp
 OBJS := $(patsubst %.cpp, %.o, $(SRCS))
 EXEC := test
 

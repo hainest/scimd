@@ -1,5 +1,9 @@
 use strict;
 use warnings;
+use Getopt::Long qw(GetOptions);
+
+my $legacy = 0;
+GetOptions('legacy'=>\$legacy);
 
 sub execute($) {
 	my $cmd = shift;
@@ -10,9 +14,13 @@ sub execute($) {
 
 my $std = '-std=c++0x';
 my @compilers = ('g++-4.4', 'g++-4.7', 'g++-4.8', 'g++-4.9', 'g++-5', 'g++-6', 'icc', 'clang++-3.8');
+my @test_architectures = ('sse', 'avx');
+
+# Don't run the scalar tests for the legacy code
+push @test_architectures, 'all' if !$legacy;
 
 for my $c (@compilers) {
-	for my $t ('sse', 'avx', 'all') {
+	for my $t (@test_architectures) {
 		print "$c, $t : ";
 		execute("make CXX=$c clean $t");
 		execute("./test");
