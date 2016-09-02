@@ -13,7 +13,7 @@ my @compilers = ('g++-4.4', 'g++-4.7', 'g++-4.8', 'g++-4.9', 'g++-5', 'g++-6', '
 
 for my $c (@compilers) {
 	for my $t ('sse', 'avx', 'all') {
-		print "\n$c, $t : \n";
+		print "$c, $t : ";
 		execute("make CXX=$c clean $t");
 		execute("./test");
 	}
