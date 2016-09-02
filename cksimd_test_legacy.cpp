@@ -1,6 +1,9 @@
+/**
+ * 	Tests for the legacy SSE-*.h interfaces
+ */
+
 #include "SSE-Float.h"
 #include "SSE-Double.h"
-#include "cksimd.h"
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -28,13 +31,14 @@ bool to_bool(T *x, size_t n) {
 	}
 	return r;
 }
-template <typename T>
-bool to_bool(T f) {
-	typedef typename T::value_type value_type;
-	value_type *x = reinterpret_cast<value_type*>(&(f.val));
-	return to_bool(x, T::size);
+bool to_bool(SSEFloat f) {
+	float *x = reinterpret_cast<float*>(&(f.val));
+	return to_bool(x, sizeof(SSEFloat));
 }
-template<>
+bool to_bool(SSEDouble f) {
+	double *x = reinterpret_cast<double*>(&(f.val));
+	return to_bool(x, sizeof(SSEDouble));
+}
 bool to_bool(int f) {
 	return f;
 }
@@ -45,36 +49,18 @@ struct answer {
 };
 template <typename T, typename U>
 void combine(T &mask, U v) {
-	mask &= v;
+	mask = mask & v;
 }
 template<>
-void combine(SSEFloat &f, bool v) {
-	f &= SSEFloat(float(v));
+void combine(SSEFloat &mask, bool v) {
+	mask = mask & SSEFloat(float(v));
 }
 template<>
-void combine(SSEDouble &f, bool v) {
-	f &= SSEDouble(double(v));
-}
-template <typename T>
-std::ostream& operator<<(std::ostream &o, cksimd<T> f) {
-	typedef typename cksimd<T>::value_type value_type;
-	value_type *x = reinterpret_cast<value_type*>(&(f.val));
-	o << '{' << x[0];
-	if(cksimd<T>::nelem >= 2) {
-		o << ' ' << x[1];
-		if(cksimd<T>::nelem >= 4) {
-			o << ' ' << x[2] << ' ' << x[3];
-			if(cksimd<T>::nelem == 8) {
-				o << ' ' << x[4] << ' ' << x[5]
-				  << ' ' << x[6] << ' ' << x[7];
-			}
-		}
-	}
-	return o << '}';
+void combine(SSEDouble &mask, bool v) {
+	mask = mask & SSEDouble(double(v));
 }
 template <typename T, typename U>
 void test(T x, U y, char const* name, answer<T,U> const& ans) {
-	std::cout << std::setw(20) << std::left << name << ": ";
 	asm volatile("sqrt_begin%=:" :);
 	auto srty = U(sqrt(y));
 	auto rsrt = x / sqrt(y);
@@ -85,7 +71,10 @@ void test(T x, U y, char const* name, answer<T,U> const& ans) {
 			 ((x / y) == ans.quot);
 	combine(a, srty == ans.srty);
 	combine(a, rsrt == ans.rsrt);
-	std::cout << (to_bool(a) ? "PASSED" : "FAILED") << '\n';
+
+	if(!to_bool(a)) {
+		std::cerr << '\n' << name << " FAILED\n";
+	}
 }
 
 int main() {
@@ -107,4 +96,5 @@ int main() {
 	test(SSEDouble{p1}, double{p2}, "SSEDouble+double", answer<SSEDouble, double>{sum,diff,prod,quot,srty,rsrt});
 	test(double{p1}, SSEDouble{p2}, "double+SSEDouble", answer<double, SSEDouble>{sum,diff,prod,quot,srty,rsrt});
 	test(double{p1}, double{p2}, "double+double", answer<double, double>{sum,diff,prod,quot,srty,rsrt});
+	std::cout << "PASSED\n";
 }
