@@ -91,6 +91,12 @@ struct cksimd {
 	friend cksimd operator -(value_type x, cksimd b) { return cksimd(x) - b; }
 	friend cksimd operator *(value_type x, cksimd b) { return cksimd(x) * b; }
 
+	friend cksimd operator < (value_type x, cksimd y) { return cksimd{x}  < y; }
+	friend cksimd operator > (value_type x, cksimd y) { return cksimd{x}  > y; }
+	friend cksimd operator ==(value_type x, cksimd y) { return cksimd{x} == y; }
+	friend cksimd operator <=(value_type x, cksimd y) { return cksimd{x} <= y; }
+	friend cksimd operator >=(value_type x, cksimd y) { return cksimd{x} >= y; }
+
 	/*
 	 * 	This is really the reciprocal square root function. Using a proxy object
 	 * 	allows code like `T x(4.0), y(1.0/sqrt(x));` to work correctly for
