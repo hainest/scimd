@@ -60,25 +60,25 @@ struct cksimd {
 	cksimd operator /=(cksimd x) { val = ck_simd::div(val, x.val, category()); return *this; }
 
 	/*Masking Operators*/
-	cksimd operator &(cksimd x) { return ck_simd::mask_and	  (x.val, val, category()); }
-	cksimd operator |(cksimd x) { return ck_simd::mask_or	  (x.val, val, category()); }
-	cksimd operator ^(cksimd x) { return ck_simd::mask_xor	  (x.val, val, category()); }
-	cksimd andnot    (cksimd x) { return ck_simd::mask_andnot (x.val, val, category()); }
+	cksimd operator &(cksimd x) { return ck_simd::mask_and	  (val, x.val, category()); }
+	cksimd operator |(cksimd x) { return ck_simd::mask_or	  (val, x.val, category()); }
+	cksimd operator ^(cksimd x) { return ck_simd::mask_xor	  (val, x.val, category()); }
+	cksimd andnot    (cksimd x) { return ck_simd::mask_andnot (val, x.val, category()); }
 
-	cksimd operator &=(cksimd x) { val = ck_simd::mask_and (x.val, val, category()); return *this; }
-	cksimd operator |=(cksimd x) { val = ck_simd::mask_or  (x.val, val, category()); return *this; }
-	cksimd operator ^=(cksimd x) { val = ck_simd::mask_xor (x.val, val, category()); return *this; }
+	cksimd operator &=(cksimd x) { val = ck_simd::mask_and (val, x.val, category()); return *this; }
+	cksimd operator |=(cksimd x) { val = ck_simd::mask_or  (val, x.val, category()); return *this; }
+	cksimd operator ^=(cksimd x) { val = ck_simd::mask_xor (val, x.val, category()); return *this; }
 
-	cksimd operator < (cksimd x) { return ck_simd::less		  (x.val, val, category()); }
-	cksimd operator > (cksimd x) { return ck_simd::greater	  (x.val, val, category()); }
-	cksimd operator ==(cksimd x) { return ck_simd::equals	  (x.val, val, category()); }
-	cksimd operator <=(cksimd x) { return ck_simd::less_eq	  (x.val, val, category()); }
-	cksimd operator >=(cksimd x) { return ck_simd::greater_eq (x.val, val, category()); }
+	cksimd operator < (cksimd x) { return ck_simd::less		  (val, x.val, category()); }
+	cksimd operator > (cksimd x) { return ck_simd::greater	  (val, x.val, category()); }
+	cksimd operator ==(cksimd x) { return ck_simd::equals	  (val, x.val, category()); }
+	cksimd operator <=(cksimd x) { return ck_simd::less_eq	  (val, x.val, category()); }
+	cksimd operator >=(cksimd x) { return ck_simd::greater_eq (val, x.val, category()); }
 
 	friend void storeu(value_type *p, cksimd x)	{ ck_simd::storeu(p, x.val, cksimd::category()); }
 
-	friend void storel(value_type *p, cksimd x) { _mm_storel_pd(p,x.val);}
-	friend void storeh(value_type *p, cksimd x) { _mm_storeh_pd(p,x.val);}
+	friend void storel(value_type *p, cksimd x) { _mm_storel_pd(p, x.val);}
+	friend void storeh(value_type *p, cksimd x) { _mm_storeh_pd(p, x.val);}
 
 
 	friend int    movemask(cksimd x)	 { return ck_simd::movemask(x.val, cksimd::category()); }
