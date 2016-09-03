@@ -96,7 +96,30 @@ class SSEDouble
        //   void display();
 
 
-
+          /**
+           * 	This routine is adapted from
+           * 	https://github.com/stgatilov/recip_rsqrt_benchmark
+           *
+           * 	It uses a 5th-order polynomial to bring the error to 51.5 bits (~3e-16).
+           *
+           * 	The speedup compared to using sqrt+div varies by CPU architecture, but
+           * 	is between 10% (Skylake) and 3x (Sandybridge) faster.
+           */
+          friend inline SSEDouble rsqrt(SSEDouble a) {
+			__m256d one = _mm256_set1_pd(1.0), 		c1 = _mm256_set1_pd(1.0/2.0),
+					c2 = _mm256_set1_pd(3.0/8.0), 	c3 = _mm256_set1_pd(15.0/48.0),
+					c4 = _mm256_set1_pd(105.0/384.0);
+			__m256d x = _mm256_cvtps_pd(_mm256_rsqrt_ps(_mm256_cvtpd_ps(a.val)));
+			__m256d r = _mm256_sub_pd(one, _mm256_mul_pd(_mm256_mul_pd(a.val, x), x));
+			__m256d r2 = _mm256_mul_pd(r, r);
+			__m256d t1 = _mm256_add_pd(_mm256_mul_pd(c2, r), c1);
+			__m256d t3 = _mm256_add_pd(_mm256_mul_pd(c4, r), c3);
+			__m256d poly = _mm256_add_pd(_mm256_mul_pd(r2, t3), t1);
+			__m256d res = _mm256_add_pd(_mm256_mul_pd(_mm256_mul_pd(x, r), poly), x);
+			SSEDouble c;
+			c.val = res;
+			return c;
+          }
 
 };
 
@@ -195,7 +218,30 @@ class SSEDouble
 
        //   void display();
 
-
+          /**
+           * 	This routine is adapted from
+           * 	https://github.com/stgatilov/recip_rsqrt_benchmark
+           *
+           * 	It uses a 5th-order polynomial to bring the error to 51.5 bits (~3e-16).
+           *
+           * 	The speedup compared to using sqrt+div varies by CPU architecture, but
+           * 	is between 10% (Skylake) and 3x (Sandybridge) faster.
+           */
+          friend inline SSEDouble rsqrt(SSEDouble a) {
+			__m128d one = _mm_set1_pd(1.0), 		c1 = _mm_set1_pd(1.0/2.0),
+					c2 = _mm_set1_pd(3.0/8.0), 	c3 = _mm_set1_pd(15.0/48.0),
+					c4 = _mm_set1_pd(105.0/384.0);
+			__m128d x = _mm_cvtps_pd(_mm_rsqrt_ps(_mm_cvtpd_ps(a.val)));
+			__m128d r = _mm_sub_pd(one, _mm_mul_pd(_mm_mul_pd(a.val, x), x));
+			__m128d r2 = _mm_mul_pd(r, r);
+			__m128d t1 = _mm_add_pd(_mm_mul_pd(c2, r), c1);
+			__m128d t3 = _mm_add_pd(_mm_mul_pd(c4, r), c3);
+			__m128d poly = _mm_add_pd(_mm_mul_pd(r2, t3), t1);
+			__m128d res = _mm_add_pd(_mm_mul_pd(_mm_mul_pd(x, r), poly), x);
+			SSEDouble c;
+			c.val = res;
+			return c;
+          }
 
 
 };
