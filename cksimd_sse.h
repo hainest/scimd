@@ -39,12 +39,6 @@ namespace ck_simd {
 	inline __m128d set1(double x, sse_double_tag) {
 		return _mm_set1_pd(x);
 	}
-	inline __m128 setr(float x, float y, float z, float w, sse_float_tag) {
-		return _mm_setr_ps(x, y, z, w);
-	}
-	inline __m128d setr(double x, double y, sse_double_tag) {
-		return _mm_setr_pd(x, y);
-	}
 	inline __m128 neg(__m128 x, sse_float_tag) {
 		return _mm_sub_ps(_mm_setzero_ps(), x);
 	}
