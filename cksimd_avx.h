@@ -119,26 +119,17 @@ namespace ck_simd {
 	inline __m256d mask_andnot(__m256d x, __m256d y, avx_double_tag) {
 		return _mm256_andnot_pd(x, y);
 	}
-	/**
-	 * 	I don't like using signaling NaNs, but the legacy
-	 * 	code does, and I don't want to break code relying
-	 * 	on this behavior.
-	 *
-	 * 	Note: Some of the comparisons use quiet NaNs.
-	 * 	This inconsistent usage was present in the
-	 * 	legacy code.
-	 */
 	inline __m256 less(__m256 x, __m256 y, avx_float_tag) {
-		return _mm256_cmp_ps(x, y, _CMP_LT_OS);
+		return _mm256_cmp_ps(x, y, _CMP_LT_OQ);
 	}
 	inline __m256d less(__m256d x, __m256d y, avx_double_tag) {
-		return _mm256_cmp_pd(x, y, _CMP_LT_OS);
+		return _mm256_cmp_pd(x, y, _CMP_LT_OQ);
 	}
 	inline __m256 greater(__m256 x, __m256 y, avx_float_tag) {
-		return _mm256_cmp_ps(x, y, _CMP_GT_OS);
+		return _mm256_cmp_ps(x, y, _CMP_GT_OQ);
 	}
 	inline __m256d greater(__m256d x, __m256d y, avx_double_tag) {
-		return _mm256_cmp_pd(x, y, _CMP_GT_OS);
+		return _mm256_cmp_pd(x, y, _CMP_GT_OQ);
 	}
 	inline __m256 less_eq(__m256 x, __m256 y, avx_float_tag) {
 		return _mm256_cmp_ps(x, y, _CMP_LE_OQ);
@@ -147,10 +138,10 @@ namespace ck_simd {
 		return _mm256_cmp_pd(x, y, _CMP_LE_OQ);
 	}
 	inline __m256 greater_eq(__m256 x, __m256 y, avx_float_tag) {
-		return _mm256_cmp_ps(x, y, _CMP_GE_OS);
+		return _mm256_cmp_ps(x, y, _CMP_GE_OQ);
 	}
 	inline __m256d greater_eq(__m256d x, __m256d y, avx_double_tag) {
-		return _mm256_cmp_pd(x, y, _CMP_GE_OS);
+		return _mm256_cmp_pd(x, y, _CMP_GE_OQ);
 	}
 	inline __m256 equals(__m256 x, __m256 y, avx_float_tag) {
 		return _mm256_cmp_ps(x, y, _CMP_EQ_OQ);
