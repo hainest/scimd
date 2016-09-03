@@ -103,13 +103,11 @@ struct cksimd {
 		cksimd y0{ck_simd::rsqrt(rhs.value.val, cksimd::category())};
 
 		// Do a Newton-Raphson iteration to bring precision to ~23 bits
-		// Explicitly construct this to override the built-in operator* in libc++
-		const cksimd t{y0 * (cksimd(3.0) - rhs.value * y0 * y0) * cksimd(0.5)};
-		return lhs * t;
+		return lhs * 0.5 * (y0 * (3.0 - rhs.value * y0 * y0));
 	}
 
 	/**
-	 *  The TMP here is is just to disambiguate this from operator/ with a sqrt_proxy<SSEFloat>
+	 *  The TMP here is is just to disambiguate this from operator/ with a sqrt_proxy<cksimd<U>>
 	 */
 	template <typename U>
 	friend inline typename std::enable_if<std::is_floating_point<U>::value, cksimd<U>>::type
@@ -118,14 +116,14 @@ struct cksimd {
 };
 
 /**
- * 	The legacy converting constructor for cksimd<T> enables this overload in dangerous
- * 	ways (e.g., when `std::sqrt` isn't visible and T=float). The constructor should be made
- * `explicit`, but that could break existing code. Use TMP to disable this overload.
+ * 	The converting constructor for cksimd<T> enables this overload in dangerous
+ * 	ways (e.g., when `std::sqrt` isn't visible and T=float). Use TMP to disable
+ *	this overload.
  *
  *	The libstdc++ cmath uses a `using` declaration to pull in the global `sqrt` names
  *	which picks up this overload and conflicts with the template declaration
- *	there. Placing this version in an anaonymous namespace removes it from
- *	the global namespace.
+ *	there. Placing this version in an anonymous namespace removes it from
+ *	the overload set.
  */
 namespace {
 	template <typename T>
