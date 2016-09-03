@@ -100,16 +100,11 @@ struct cksimd {
 	/*
 	 * 	This is really the reciprocal square root function. Using a proxy object
 	 * 	allows code like `T x(4.0), y(1.0/sqrt(x));` to work correctly for
-	 * 	all types and use the rsqrt optimization for T=cksimd<float>.
+	 * 	all types and use the rsqrt optimization for T=cksimd.
 	 *
-	 * 	Note: There is no rsqrt intrinsic for double-precision. There isn't even
-	 * 		  a reciprocal intrinsic, so there is no optimization for DP.
 	 */
 	friend inline cksimd operator/(cksimd lhs, ck_simd::sqrt_proxy<cksimd> rhs) {
-		cksimd y0{ck_simd::rsqrt(rhs.value.val, cksimd::category())};
-
-		// Do a Newton-Raphson iteration to bring precision to ~23 bits
-		return lhs * 0.5 * (y0 * (3.0 - rhs.value * y0 * y0));
+		return lhs * ck_simd::rsqrt(rhs.value.val, cksimd::category());
 	}
 
 	/**

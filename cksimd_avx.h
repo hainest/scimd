@@ -22,10 +22,36 @@ namespace ck_simd {
 		return _mm256_sqrt_pd(x);
 	}
 	inline __m256 rsqrt(__m256 x, avx_float_tag) {
-		return _mm256_rsqrt_ps(x);
+		/**
+		 * 	Do one Newton-Raphson iteration to bring the precision to ~23
+		 * 	bits (~2e-7). This works equally well on Bulldozer, Piledriver,
+		 *	Sandybridge, and Skylake.
+		 */
+		const __m256 three = _mm256_set1_ps(3.0f), half = _mm256_set1_ps(0.5f);
+		const __m256 rsrt = _mm256_rsqrt_ps(x);
+		const __m256 muls = _mm256_mul_ps(_mm256_mul_ps(x, rsrt), rsrt);
+		return _mm256_mul_ps(_mm256_mul_ps(half, rsrt), _mm256_sub_ps(three, muls));
 	}
-	inline __m256d rsqrt(__m256d x, avx_double_tag) {
-		return _mm256_div_pd(_mm256_set1_pd(1.0), _mm256_sqrt_pd(x));
+	inline __m256d rsqrt(__m256d a, avx_double_tag) {
+		/**
+		* 	This routine is adapted from
+		* 	https://github.com/stgatilov/recip_rsqrt_benchmark
+		*
+		* 	It uses a 5th-order polynomial to bring the error to 51.5 bits (~3e-16).
+		*
+		* 	The speedup compared to using sqrt+div varies by CPU architecture, but
+		* 	is between 10% (Skylake) and 3x (Sandybridge) faster.
+		*/
+		__m256d one = _mm256_set1_pd(1.0), c1 = _mm256_set1_pd(1.0/2.0),
+				c2 = _mm256_set1_pd(3.0/8.0), c3 = _mm256_set1_pd(15.0/48.0),
+				c4 = _mm256_set1_pd(105.0/384.0);
+		__m256d x = _mm256_cvtps_pd(_mm_rsqrt_ps(_mm256_cvtpd_ps(a)));
+		__m256d r = _mm256_sub_pd(one, _mm256_mul_pd(_mm256_mul_pd(a, x), x));
+		__m256d r2 = _mm256_mul_pd(r, r);
+		__m256d t1 = _mm256_add_pd(_mm256_mul_pd(c2, r), c1);
+		__m256d t3 = _mm256_add_pd(_mm256_mul_pd(c4, r), c3);
+		__m256d poly = _mm256_add_pd(_mm256_mul_pd(r2, t3), t1);
+		return _mm256_add_pd(_mm256_mul_pd(_mm256_mul_pd(x, r), poly), x);
 	}
 	inline __m256 zero(avx_float_tag) {
 		return _mm256_setzero_ps();
