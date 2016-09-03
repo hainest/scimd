@@ -54,7 +54,7 @@ public:
 		c.val= _mm_rsqrt_ps(a.val);
 
 		// do one Newton-Raphson iteration to bring the precision to ~23 bits (~2e-7)
-		c = c * (3.0f - a * c * c) * 0.5f;
+		c *= 0.5f * (3.0f - a * c * c);
 		return c;
 	}
 };
