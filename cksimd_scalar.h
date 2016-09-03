@@ -59,12 +59,6 @@ namespace ck_simd {
 	inline double set1(double x, scalar_double_tag) {
 		return x;
 	}
-	inline float setr(float x, scalar_float_tag) {
-		return x;
-	}
-	inline double setr(double x, scalar_double_tag) {
-		return x;
-	}
 	inline float neg(float x, scalar_float_tag) {
 		return -x;
 	}

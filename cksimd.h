@@ -48,27 +48,6 @@ struct cksimd {
 				 !ck_simd::is_scalar<category()>::value, U>::type>
 	cksimd(U x) : val(ck_simd::set1(x, category())) {}
 
-	/**
-	 * 	\deprecated{This constructor exists solely for backwards compatibility}
-	 *
-	 * 	Note: Do not use this constructor as it breaks genericity. Use the loadu
-	 * 		  member function to populate values.
-	 */
-	template <typename U, typename =
-			  typename std::enable_if<std::is_floating_point<U>::value && nelem == 2, U>::type>
-	cksimd(U f0, U f1) : val(ck_simd::setr(f0, f1, category())) {}
-
-	/**
-	 * 	\deprecated{This constructor exists solely for backwards compatibility}
-	 *
-	 * 	Note: Do not use this constructor as it breaks genericity. Use the loadu
-	 * 		  member function to populate values.
-	 */
-	template <typename U, typename =
-			  typename std::enable_if<std::is_floating_point<U>::value && nelem == 4, U>::type>
-	cksimd(U f0, U f1, U f2, U f3)
-		: val(ck_simd::setr(f0, f1, f2, f3, category())) {}
-
 	cksimd operator -()			{ return ck_simd::neg(val,		  category()); }
 	cksimd operator +(cksimd x) { return ck_simd::add(val, x.val, category()); }
 	cksimd operator -(cksimd x) { return ck_simd::sub(val, x.val, category()); }

@@ -39,9 +39,6 @@ namespace ck_simd {
 	inline __m256d set1(double x, avx_double_tag) {
 		return _mm256_set1_pd(x);
 	}
-	inline __m256d setr(double x, double y, double z, double w, avx_double_tag) {
-		return _mm256_setr_pd(x, y, z, w);
-	}
 	inline __m256 neg(__m256 x, avx_float_tag) {
 		return _mm256_sub_ps(_mm256_setzero_ps(), x);
 	}
