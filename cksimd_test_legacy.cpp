@@ -24,8 +24,8 @@ template <> struct mask<float>  { typedef maskf_t type; };
 template <> struct mask<double> { typedef mask_t type; };
 template <typename T>
 bool to_bool(T *x, size_t n) {
-	uint32_t r{0};
 	typedef typename mask<T>::type mask_type;
+	decltype(mask_type::i) r{0};
 	for(size_t i=0; i<n; ++i) {
 		r |= mask_type(x[i]).i;
 	}
