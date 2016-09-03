@@ -92,7 +92,14 @@ class SSEFloat
 
         //   void display();
 
+          friend inline SSEFloat rsqrt(const SSEFloat &a) {
+        	  SSEFloat c;
+        	  c.val= _mm_rsqrt_ps(a.val);
 
+        	  // do one Newton-Raphson iteration to bring the precision to ~23 bits (~2e-7)
+        	  c.val = c.val * (3.0f - a.val * c.val * c.val) * 0.5f;
+        	  return c;
+          }
 
 
 };
