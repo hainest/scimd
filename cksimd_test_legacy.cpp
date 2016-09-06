@@ -29,7 +29,7 @@ bool to_bool(T *x, size_t n) {
 	for(size_t i=0; i<n; ++i) {
 		r |= mask_type(x[i]).i;
 	}
-	return r;
+	return r != 0;
 }
 bool to_bool(SSEFloat f) {
 	float *x = reinterpret_cast<float*>(&(f.val));
@@ -37,7 +37,11 @@ bool to_bool(SSEFloat f) {
 }
 bool to_bool(SSEDouble f) {
 	double *x = reinterpret_cast<double*>(&(f.val));
-	return to_bool(x, sizeof(SSEDouble));
+#ifdef CMK_USE_SSE2
+	return to_bool(x, 4);
+#else
+	return to_bool(x, 8);
+#endif
 }
 bool to_bool(int f) {
 	return f;
@@ -53,58 +57,71 @@ void combine(T &mask, U v) {
 }
 template<>
 void combine(SSEFloat &mask, bool v) {
+	// This isn't correct, but it works.
+	// The correct method throws an ICE in gcc-4.4.7
 	mask = mask & SSEFloat(float(v));
 }
 template<>
 void combine(SSEDouble &mask, bool v) {
+	// This isn't correct, but it works.
+	// The correct method throws an ICE in gcc-4.4.7
 	mask = mask & SSEDouble(double(v));
 }
-std::ostream& operator<<(std::ostream &o, SSEFloat f) {
-	float *x = reinterpret_cast<float*>(&(f.val));
-	return o << '{' << x[0] << ',' << x[1] << ','
-			        << x[2] << ',' << x[3] << '}';
-}
-template <typename T, typename U>
-void test(T x, U y, char const* name, answer<T,U> const& ans) {
+template <typename T, typename U, typename V>
+void test(T x, U y, char const* name, answer<T,U> const& ans, V tol) {
 	asm volatile("simd_test_begin%=:" :);
 	auto srty = U(sqrt(y));
 	auto rsrt = x / sqrt(y);
-	auto a = ((x + y) == ans.sum ) &
-			 ((x - y) == ans.diff) &
-			 ((x * y) == ans.prod) &
-			 ((x / y) == ans.quot);
-	combine(a, srty == ans.srty);
-	combine(a, rsrt == ans.rsrt);
+	auto a = (((x + y) - ans.sum)  < tol) &
+			 (((x - y) - ans.diff) < tol) &
+			 (((x * y) - ans.prod) < tol) &
+			 (((x / y) - ans.quot) < tol);
+	combine(a, (srty - ans.srty) < tol);
+	combine(a, (rsrt - ans.rsrt) < tol);
 	asm volatile("simd_test_end%=:" :);
 
 	if(!to_bool(a)) {
-		std::cerr << '\n' << name << " FAILED\n";
+		std::cerr << name << " FAILED\n";
+		std::exit(-1);
 	}
 }
 
+
 int main() {
-	float p1 = 4.0f;
-	float p2 = 16.0f;
-
-	float sum = p1 + p2;
-	float diff = p1 - p2;
-	float prod = p1 * p2;
-	float quot = p1 / p2;
-	float srty = sqrt(p2);
-	float rsrt = p1 / sqrt(p2);
-
-	// No AVX support for SP
 #ifdef CMK_USE_SSE2
-	test(SSEFloat{p1}, SSEFloat{p2}, "SSEFloat+SSEFloat", answer<SSEFloat, SSEFloat>{sum,diff,prod,quot,srty,rsrt});
-	test(SSEFloat{p1}, p2, "SSEFloat+float", answer<SSEFloat, float>{sum,diff,prod,quot,srty,rsrt});
-	test(p1, SSEFloat{p2}, "float+SSEFloat", answer<float, SSEFloat>{sum,diff,prod,quot,srty,rsrt});
-	test(p1, p2, "float+float", answer<float, float>{sum,diff,prod,quot,srty,rsrt});
+	{
+		float x = 3.0f;
+		float y = 17.0f;
+		float sum = x + y;
+		float diff = x - y;
+		float prod = x * y;
+		float quot = x / y;
+		float srty = sqrt(y);
+		float rsrt = x / sqrt(y);
+		const float tol = 2e-07;
+
+		test(SSEFloat{x}, SSEFloat{y}, "SSEFloat+SSEFloat", answer<SSEFloat, SSEFloat>{sum,diff,prod,quot,srty,rsrt}, tol);
+		test(SSEFloat{x}, y, "SSEFloat+float", answer<SSEFloat, float>{sum,diff,prod,quot,srty,rsrt}, tol);
+		test(x, SSEFloat{y}, "float+SSEFloat", answer<float, SSEFloat>{sum,diff,prod,quot,srty,rsrt}, tol);
+		test(x, y, "float+float", answer<float, float>{sum,diff,prod,quot,srty,rsrt}, tol);
+	}
 #endif
 
-	test(SSEDouble{p1}, SSEDouble{p2}, "SSEDouble+SSEDouble", answer<SSEDouble, SSEDouble>{sum,diff,prod,quot,srty,rsrt});
-	test(SSEDouble{p1}, double{p2}, "SSEDouble+double", answer<SSEDouble, double>{sum,diff,prod,quot,srty,rsrt});
-	test(double{p1}, SSEDouble{p2}, "double+SSEDouble", answer<double, SSEDouble>{sum,diff,prod,quot,srty,rsrt});
-	test(double{p1}, double{p2}, "double+double", answer<double, double>{sum,diff,prod,quot,srty,rsrt});
+	{
+		double x = 3.0;
+		double y = 17.0;
+		double sum = x + y;
+		double diff = x - y;
+		double prod = x * y;
+		double quot = x / y;
+		double srty = sqrt(y);
+		double rsrt = x / sqrt(y);
+		const double tol = 2e-16;
+
+		test(SSEDouble{x}, SSEDouble{y}, "SSEDouble+SSEDouble", answer<SSEDouble, SSEDouble>{sum,diff,prod,quot,srty,rsrt}, tol);
+		test(SSEDouble{x}, y, "SSEDouble+double", answer<SSEDouble, double>{sum,diff,prod,quot,srty,rsrt}, tol);
+		test(x, SSEDouble{y}, "double+SSEDouble", answer<double, SSEDouble>{sum,diff,prod,quot,srty,rsrt}, tol);
+		test(x, y, "double+double", answer<double, double>{sum,diff,prod,quot,srty,rsrt}, tol);
+	}
 	std::cout << "DONE\n";
 }
-
