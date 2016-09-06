@@ -27,7 +27,7 @@ bool to_bool(T *x, size_t n) {
 	for(size_t i=0; i<n; ++i) {
 		r |= mask_type(x[i]).i;
 	}
-	return r;
+	return r != 0;
 }
 template <typename T>
 bool to_bool(T f) {
@@ -53,12 +53,16 @@ void combine(T &mask, U v) {
 	mask &= v;
 }
 template<>
-void combine(cksimd<float> &f, bool v) {
-	f &= cksimd<float>(float(v));
+void combine(cksimd<float> &mask, bool v) {
+	// This isn't correct, but it works.
+	// The correct method throws an ICE in gcc-4.4.7
+	mask &= cksimd<float>(float(v));
 }
 template<>
-void combine(cksimd<double> &f, bool v) {
-	f &= cksimd<double>(double(v));
+void combine(cksimd<double> &mask, bool v) {
+	// This isn't correct, but it works.
+	// The correct method throws an ICE in gcc-4.4.7
+	mask &= cksimd<double>(double(v));
 }
 template <typename T>
 std::ostream& operator<<(std::ostream &o, cksimd<T> f) {
@@ -80,7 +84,7 @@ std::ostream& operator<<(std::ostream &o, cksimd<T> f) {
 template <typename T, typename U, typename V>
 void test(T x, U y, char const* name, answer<T,U> const& ans, V tol) {
 	asm volatile("simd_test_begin%=:" :);
-	auto srty = U(sqrt(y));
+	U srty = sqrt(y);
 	auto rsrt = x / sqrt(y);
 	auto a = (((x + y) - ans.sum)  <= tol) &
 			 (((x - y) - ans.diff) <= tol) &
