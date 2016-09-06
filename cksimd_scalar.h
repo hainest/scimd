@@ -157,10 +157,16 @@ namespace ck_simd {
 		 */
 		return (x < 0.0) ? 0x3 : 0;
 	}
-	static inline void storeu(float *p, float x, scalar_float_tag) {
+	static inline void store(float *p, float x, scalar_float_tag, aligned_store_tag) {
 		*p = x;
 	}
-	static inline void storeu(double *p, double x, scalar_double_tag) {
+	static inline void store(double *p, double x, scalar_double_tag, aligned_store_tag) {
+		*p = x;
+	}
+	static inline void store(float *p, float x, scalar_float_tag, unaligned_store_tag) {
+		*p = x;
+	}
+	static inline void store(double *p, double x, scalar_double_tag, unaligned_store_tag) {
 		*p = x;
 	}
 	static inline float max(float x, float y, scalar_float_tag) {
@@ -175,10 +181,16 @@ namespace ck_simd {
 	static inline double min(double x, double y, scalar_double_tag) {
 		return std::min(x,y);
 	}
-	static inline float loadu(float const* p, scalar_float_tag) {
+	static inline float load(float const* p, scalar_float_tag, aligned_load_tag) {
 		return *p;
 	}
-	static inline double loadu(double const* p, scalar_double_tag) {
+	static inline double load(double const* p, scalar_double_tag, aligned_load_tag) {
+		return *p;
+	}
+	static inline float load(float const* p, scalar_float_tag, unaligned_load_tag) {
+		return *p;
+	}
+	static inline double load(double const* p, scalar_double_tag, unaligned_load_tag) {
 		return *p;
 	}
 };

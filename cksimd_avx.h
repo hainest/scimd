@@ -155,10 +155,16 @@ namespace ck_simd {
 	static inline int movemask(__m256d x, avx_double_tag) {
 		return _mm256_movemask_pd(x);
 	}
-	static inline void storeu(float *p, __m256 x, avx_float_tag) {
+	static inline void store(float *p, __m256 x, avx_float_tag, aligned_store_tag) {
+		_mm256_store_ps(p, x);
+	}
+	static inline void store(double *p, __m256d x, avx_double_tag, aligned_store_tag) {
+		_mm256_store_pd(p, x);
+	}
+	static inline void store(float *p, __m256 x, avx_float_tag, unaligned_store_tag) {
 		_mm256_storeu_ps(p, x);
 	}
-	static inline void storeu(double *p, __m256d x, avx_double_tag) {
+	static inline void store(double *p, __m256d x, avx_double_tag, unaligned_store_tag) {
 		_mm256_storeu_pd(p, x);
 	}
 	static inline __m256 max(__m256 x, __m256 y, avx_float_tag) {
@@ -173,10 +179,16 @@ namespace ck_simd {
 	static inline __m256d min(__m256d x, __m256d y, avx_double_tag) {
 		return _mm256_min_pd(x, y);
 	}
-	static inline __m256 loadu(float const* p, avx_float_tag) {
+	static inline __m256 load(float const* p, avx_float_tag, aligned_load_tag) {
+		return _mm256_load_ps(p);
+	}
+	static inline __m256d load(double const* p, avx_double_tag, aligned_load_tag) {
+		return _mm256_load_pd(p);
+	}
+	static inline __m256 load(float const* p, avx_float_tag, unaligned_load_tag) {
 		return _mm256_loadu_ps(p);
 	}
-	static inline __m256d loadu(double const* p, avx_double_tag) {
+	static inline __m256d load(double const* p, avx_double_tag, unaligned_load_tag) {
 		return _mm256_loadu_pd(p);
 	}
 };

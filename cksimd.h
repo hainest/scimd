@@ -30,7 +30,9 @@ namespace ck_simd {
 
 }
 
-template <typename T>
+template <typename T,
+		  typename load_alignment  = ck_simd::unaligned_load_tag,
+		  typename store_alignment = ck_simd::unaligned_store_tag>
 struct cksimd {
 	typedef T value_type;
 	typedef typename ck_simd::simd_category<value_type>::type category;
@@ -75,14 +77,14 @@ struct cksimd {
 	cksimd operator <=(cksimd x) { return ck_simd::less_eq	  (val, x.val, category()); }
 	cksimd operator >=(cksimd x) { return ck_simd::greater_eq (val, x.val, category()); }
 
-	friend void storeu(value_type *p, cksimd x)	{ ck_simd::storeu(p, x.val, cksimd::category()); }
+	friend void   store(value_type *p, cksimd x){ ck_simd::store(p, x.val, cksimd::category(), store_alignment()); }
+	friend cksimd load (value_type *p)			{ return ck_simd::load(p, cksimd::category(), load_alignment()); }
 
 	friend void storel(value_type *p, cksimd x) { _mm_storel_pd(p, x.val);}
 	friend void storeh(value_type *p, cksimd x) { _mm_storeh_pd(p, x.val);}
 
 
 	friend int    movemask(cksimd x)	 { return ck_simd::movemask(x.val, cksimd::category()); }
-	friend cksimd loadu   (value_type *p){ return ck_simd::loadu(p, cksimd::category()); }
 
 	friend cksimd max (cksimd x, cksimd b) { return ck_simd::max(x.val, b.val, cksimd::category()); }
 	friend cksimd min (cksimd x, cksimd b) { return ck_simd::min(x.val, b.val, cksimd::category()); }
@@ -101,6 +103,9 @@ struct cksimd {
 	 * 	This is really the reciprocal square root function. Using a proxy object
 	 * 	allows code like `T x(4.0), y(1.0/sqrt(x));` to work correctly for
 	 * 	all types and use the rsqrt optimization for T=cksimd.
+	 *
+	 * 	NOTE: This is **NOT** IEEE754 compliant. See the respective definitions of
+	 * 		  ck_simd::rsqrt to see the relative errors.
 	 *
 	 */
 	friend inline cksimd operator/(cksimd lhs, ck_simd::sqrt_proxy<cksimd> rhs) {
