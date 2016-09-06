@@ -13,7 +13,7 @@ sub execute($) {
 }
 
 my $std = '-std=c++0x';
-my @compilers = ('g++-4.4', 'g++-4.7', 'g++-4.8', 'g++-4.9', 'g++-5', 'g++-6', 'icc', 'clang++-3.8');
+my @compilers = ('g++-4.4', 'g++-4.5', 'g++-4.6', 'g++-4.7', 'g++-4.8', 'g++-4.9', 'g++-5', 'g++-6', 'icc', 'clang++-3.7', 'clang++-3.8');
 my @test_architectures = ('sse', 'avx');
 
 # Don't run the scalar tests for the legacy code
