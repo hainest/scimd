@@ -108,7 +108,7 @@ struct cksimd {
 	 * 		  ck_simd::rsqrt to see the relative errors.
 	 *
 	 */
-	friend inline cksimd operator/(cksimd lhs, ck_simd::sqrt_proxy<cksimd> rhs) {
+	friend cksimd operator/(cksimd lhs, ck_simd::sqrt_proxy<cksimd> rhs) {
 		return lhs * ck_simd::rsqrt(rhs.value.val, cksimd::category());
 	}
 
@@ -116,7 +116,7 @@ struct cksimd {
 	 *  The TMP here is is just to disambiguate this from operator/ with a sqrt_proxy<cksimd<U>>
 	 */
 	template <typename U>
-	friend inline typename std::enable_if<std::is_floating_point<U>::value, cksimd<U>>::type
+	friend typename std::enable_if<std::is_floating_point<U>::value, cksimd<U>>::type
 	operator /(value_type a, cksimd<U> b) { return cksimd<U>(a) / b; }
 
 };
