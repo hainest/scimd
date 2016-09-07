@@ -3,3 +3,4 @@ test
 *.xml
 .project
 .cproject
+stuff.pl
