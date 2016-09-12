@@ -1,4 +1,4 @@
-STD		 = -std=c++0x
+STD		 = -std=c++11
 CXXFLAGS = -Wall -Wextra
 OPT    	 = -O3
 ARCH	 = -m64 -mfpmath=sse
