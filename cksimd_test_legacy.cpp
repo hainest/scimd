@@ -7,6 +7,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cmath>
+#include <cstdlib>
 
 union maskf_t {
 	float f;
