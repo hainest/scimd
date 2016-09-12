@@ -34,11 +34,11 @@ template <typename T,
 		  typename load_alignment  = ck_simd::unaligned_load_tag,
 		  typename store_alignment = ck_simd::unaligned_store_tag>
 struct cksimd {
-	typedef T value_type;
-	typedef typename ck_simd::simd_category<value_type>::type category;
-	typedef typename ck_simd::simd_type<value_type>::type simd_t;
-	static const size_t size = sizeof(simd_t);
-	static const size_t nelem = size / sizeof(value_type);
+	using value_type = T;
+	using category = typename ck_simd::simd_category<value_type>::type;
+	using simd_t = typename ck_simd::simd_type<value_type>::type;
+	static constexpr size_t size = sizeof(simd_t);
+	static constexpr size_t nelem = size / sizeof(value_type);
 
 	simd_t val;
 	cksimd() 		 : val(ck_simd::zero(category())) {}
