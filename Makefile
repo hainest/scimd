@@ -7,7 +7,6 @@ ARCH	 = -m64 -mfpmath=sse
 .DEFAULT_GOAL = all
 
 SRCS := cksimd_test.cpp
-#SRCS := cksimd_test_legacy.cpp
 OBJS := $(patsubst %.cpp, %.o, $(SRCS))
 EXEC := test
 
