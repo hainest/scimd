@@ -37,8 +37,8 @@ struct cksimd {
 	using value_type = T;
 	using category = typename ck_simd::simd_category<value_type>::type;
 	using simd_t = typename ck_simd::simd_type<value_type>::type;
-	static constexpr size_t size = sizeof(simd_t);
-	static constexpr size_t nelem = size / sizeof(value_type);
+	static constexpr auto size = sizeof(simd_t);
+	static constexpr auto nelem = size / sizeof(value_type);
 
 	simd_t val;
 	cksimd() 		 : val(ck_simd::zero(category())) {}
@@ -80,11 +80,33 @@ struct cksimd {
 	friend void   store(value_type *p, cksimd x){ ck_simd::store(p, x.val, cksimd::category(), store_alignment()); }
 	friend cksimd load (value_type *p)			{ return ck_simd::load(p, cksimd::category(), load_alignment()); }
 
-	friend void storel(value_type *p, cksimd x) { _mm_storel_pd(p, x.val);}
-	friend void storeh(value_type *p, cksimd x) { _mm_storeh_pd(p, x.val);}
+	// gcc-4.7 doesn't sweep this away at -O3
+	// No one sweeps it away at -O2
+	template <typename FwdIter, typename UnaryFunc>
+	FwdIter pack(FwdIter beg, FwdIter end, UnaryFunc f, value_type default_val = value_type{}) {
+		value_type arr[nelem];
+		size_t i = 0;
+		for(; i < nelem && beg != end; i++) {
+			arr[i] = f(*beg);
+			++beg;
+		}
+		for(; i < nelem; i++) {
+			arr[i] = default_val;
+		}
+		val = ck_simd::load(arr, cksimd::category(), ck_simd::unaligned_load_tag());
+		return beg;
+	}
 
+	template <typename FwdIter, typename BinaryFunc>
+	FwdIter unpack(FwdIter beg, FwdIter end, BinaryFunc f) {
+		for(size_t i = 0; i < nelem && beg != end; i++) {
+			f(*beg, val[i]);
+			++beg;
+		}
+		return beg;
+	}
 
-	friend int    movemask(cksimd x)	 { return ck_simd::movemask(x.val, cksimd::category()); }
+	friend int movemask(cksimd x) { return ck_simd::movemask(x.val, cksimd::category()); }
 
 	friend cksimd max (cksimd x, cksimd b) { return ck_simd::max(x.val, b.val, cksimd::category()); }
 	friend cksimd min (cksimd x, cksimd b) { return ck_simd::min(x.val, b.val, cksimd::category()); }
