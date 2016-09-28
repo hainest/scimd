@@ -26,10 +26,13 @@ debug: all
 all: $(EXEC)
 
 %.o : %.cpp Makefile
-	@ $(CXX) $(STD) $(CXXFLAGS) $(OPT) $(ARCH) $(OMP) -c -o $@ $<
+	$(CXX) $(STD) $(CXXFLAGS) $(OPT) $(ARCH) $(OMP) -c -o $@ $<
 
 $(EXEC) : $(OBJS)
 	@ $(CXX) -o $@ $< $(LNFLAGS) $(OMP) $(LDFLAGS)
 
 clean:
 	@ rm -f $(OBJS) $(EXEC)
+
+dump:
+	@ objdump -D -j .text -M intel $(EXEC) | c++filt > $(EXEC).asm
