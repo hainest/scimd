@@ -33,7 +33,7 @@ template <typename T>
 bool to_bool(T f) {
 	typedef typename T::value_type value_type;
 	value_type *x = reinterpret_cast<value_type*>(&(f.val));
-	return to_bool(x, T::nelem);
+	return to_bool(x, T::size);
 }
 template<>
 bool to_bool(bool b) {
@@ -69,11 +69,11 @@ std::ostream& operator<<(std::ostream &o, cksimd<T> f) {
 	typedef typename cksimd<T>::value_type value_type;
 	value_type *x = reinterpret_cast<value_type*>(&(f.val));
 	o << '{' << x[0];
-	if(cksimd<T>::nelem >= 2) {
+	if(cksimd<T>::size >= 2) {
 		o << ' ' << x[1];
-		if(cksimd<T>::nelem >= 4) {
+		if(cksimd<T>::size >= 4) {
 			o << ' ' << x[2] << ' ' << x[3];
-			if(cksimd<T>::nelem == 8) {
+			if(cksimd<T>::size == 8) {
 				o << ' ' << x[4] << ' ' << x[5]
 				  << ' ' << x[6] << ' ' << x[7];
 			}
@@ -110,6 +110,10 @@ void test_memory() {
 }
 
 int main() {
+	// Don't let the size get bigger than the underlying SIMD type
+	static_assert(sizeof(cksimd<float>::simd_t) == sizeof(cksimd<float>), "cksimd<float> must be the size of cksimd<float>::simd_t");
+	static_assert(sizeof(cksimd<double>::simd_t) == sizeof(cksimd<double>), "cksimd<double> must be the size of cksimd<double>::simd_t");
+
 	{
 		float x = 3.0f;
 		float y = 17.0f;
