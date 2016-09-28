@@ -82,7 +82,7 @@ std::ostream& operator<<(std::ostream &o, cksimd<T> f) {
 	return o << '}';
 }
 template <typename T, typename U, typename V>
-void test(T x, U y, char const* name, answer<T,U> const& ans, V tol) {
+void test_arithmetic(T x, U y, char const* name, answer<T,U> const& ans, V tol) {
 	asm volatile("simd_test_begin%=:" :);
 	U srty = sqrt(y);
 	auto rsrt = x / sqrt(y);
@@ -100,6 +100,15 @@ void test(T x, U y, char const* name, answer<T,U> const& ans, V tol) {
 	}
 }
 
+template <typename T>
+void test_memory() {
+	cksimd<T> x;
+	T arr[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0};
+	asm volatile("simd_memory_begin%=:" :);
+	auto end = x.pack(std::begin(arr), std::end(arr), [](T x) { return x; });
+	asm volatile("simd_memory_end%=:" :);
+}
+
 int main() {
 	{
 		float x = 3.0f;
@@ -112,10 +121,10 @@ int main() {
 		float rsrt = x / sqrt(y);
 		const float tol = 2e-07;
 
-		test(cksimd<float>{x}, cksimd<float>{y}, "cksimd<float>+cksimd<float>", answer<cksimd<float>, cksimd<float>>{sum,diff,prod,quot,srty,rsrt}, tol);
-		test(cksimd<float>{x}, y, "cksimd<float>+float", answer<cksimd<float>, float>{sum,diff,prod,quot,srty,rsrt}, tol);
-		test(x, cksimd<float>{y}, "float+cksimd<float>", answer<float, cksimd<float>>{sum,diff,prod,quot,srty,rsrt}, tol);
-		test(x, y, "float+float", answer<float, float>{sum,diff,prod,quot,srty,rsrt}, tol);
+		test_arithmetic(cksimd<float>{x}, cksimd<float>{y}, "cksimd<float>+cksimd<float>", answer<cksimd<float>, cksimd<float>>{sum,diff,prod,quot,srty,rsrt}, tol);
+		test_arithmetic(cksimd<float>{x}, y, "cksimd<float>+float", answer<cksimd<float>, float>{sum,diff,prod,quot,srty,rsrt}, tol);
+		test_arithmetic(x, cksimd<float>{y}, "float+cksimd<float>", answer<float, cksimd<float>>{sum,diff,prod,quot,srty,rsrt}, tol);
+		test_arithmetic(x, y, "float+float", answer<float, float>{sum,diff,prod,quot,srty,rsrt}, tol);
 	}
 
 	{
@@ -129,11 +138,10 @@ int main() {
 		double rsrt = x / sqrt(y);
 		const double tol = 2e-16;
 
-		test(cksimd<double>{x}, cksimd<double>{y}, "cksimd<double>+cksimd<double>", answer<cksimd<double>, cksimd<double>>{sum,diff,prod,quot,srty,rsrt}, tol);
-		test(cksimd<double>{x}, y, "cksimd<double>+double", answer<cksimd<double>, double>{sum,diff,prod,quot,srty,rsrt}, tol);
-		test(x, cksimd<double>{y}, "double+cksimd<double>", answer<double, cksimd<double>>{sum,diff,prod,quot,srty,rsrt}, tol);
-		test(x, y, "double+double", answer<double, double>{sum,diff,prod,quot,srty,rsrt}, tol);
+		test_arithmetic(cksimd<double>{x}, cksimd<double>{y}, "cksimd<double>+cksimd<double>", answer<cksimd<double>, cksimd<double>>{sum,diff,prod,quot,srty,rsrt}, tol);
+		test_arithmetic(cksimd<double>{x}, y, "cksimd<double>+double", answer<cksimd<double>, double>{sum,diff,prod,quot,srty,rsrt}, tol);
+		test_arithmetic(x, cksimd<double>{y}, "double+cksimd<double>", answer<double, cksimd<double>>{sum,diff,prod,quot,srty,rsrt}, tol);
+		test_arithmetic(x, y, "double+double", answer<double, double>{sum,diff,prod,quot,srty,rsrt}, tol);
 	}
-
 	std::cout << "DONE\n";
 }
