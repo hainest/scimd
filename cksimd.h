@@ -37,8 +37,7 @@ struct cksimd {
 	using value_type = T;
 	using category = typename ck_simd::simd_category<value_type>::type;
 	using simd_t = typename ck_simd::simd_type<value_type>::type;
-	static constexpr auto size = sizeof(simd_t);
-	static constexpr auto nelem = size / sizeof(value_type);
+	static constexpr auto size = sizeof(simd_t) / sizeof(value_type);
 
 	simd_t val;
 	cksimd() 		 : val(ck_simd::zero(category())) {}
@@ -84,13 +83,13 @@ struct cksimd {
 	// No one sweeps it away at -O2
 	template <typename FwdIter, typename UnaryFunc>
 	FwdIter pack(FwdIter beg, FwdIter end, UnaryFunc f, value_type default_val = value_type{}) {
-		value_type arr[nelem];
+		value_type arr[size];
 		size_t i = 0;
-		for(; i < nelem && beg != end; i++) {
+		for(; i < size && beg != end; i++) {
 			arr[i] = f(*beg);
 			++beg;
 		}
-		for(; i < nelem; i++) {
+		for(; i < size; i++) {
 			arr[i] = default_val;
 		}
 		val = ck_simd::load(arr, cksimd::category(), ck_simd::unaligned_load_tag());
@@ -99,7 +98,7 @@ struct cksimd {
 
 	template <typename FwdIter, typename BinaryFunc>
 	FwdIter unpack(FwdIter beg, FwdIter end, BinaryFunc f) {
-		for(size_t i = 0; i < nelem && beg != end; i++) {
+		for(size_t i = 0; i < size && beg != end; i++) {
 			f(*beg, val[i]);
 			++beg;
 		}
