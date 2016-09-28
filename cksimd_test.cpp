@@ -54,15 +54,11 @@ void combine(T &mask, U v) {
 }
 template<>
 void combine(cksimd<float> &mask, bool v) {
-	// This isn't correct, but it works.
-	// The correct method throws an ICE in gcc-4.4.7
-	mask &= cksimd<float>(float(v));
+	mask &= cksimd<float>(maskf_t{static_cast<uint32_t>(v)}.f);
 }
 template<>
 void combine(cksimd<double> &mask, bool v) {
-	// This isn't correct, but it works.
-	// The correct method throws an ICE in gcc-4.4.7
-	mask &= cksimd<double>(double(v));
+	mask &= cksimd<double>(mask_t{static_cast<uint64_t>(v)}.d);
 }
 template <typename T>
 std::ostream& operator<<(std::ostream &o, cksimd<T> f) {
