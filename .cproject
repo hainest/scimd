@@ -128,13 +128,19 @@
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="cksimd.null.805439527" name="cksimd"/>
 	</storageModule>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="refreshScope" versionNumber="2">
 		<configuration configurationName="Default">
 			<resource resourceType="PROJECT" workspacePath="/cksimd"/>
 		</configuration>
+	</storageModule>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.1481821149;cdt.managedbuild.config.gnu.exe.release.1481821149.;cdt.managedbuild.tool.gnu.cpp.compiler.exe.release.1702486841;cdt.managedbuild.tool.gnu.cpp.compiler.input.1682624266">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.1481821149;cdt.managedbuild.config.gnu.exe.release.1481821149.;cdt.managedbuild.tool.gnu.c.compiler.exe.release.1887499764;cdt.managedbuild.tool.gnu.c.compiler.input.693945901">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
 	</storageModule>
 </cproject>
