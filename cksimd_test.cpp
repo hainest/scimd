@@ -18,11 +18,11 @@ union maskf_t {
 };
 template <typename T>
 struct mask {};
-template <> struct mask<float>  { typedef maskf_t type; };
-template <> struct mask<double> { typedef mask_t type; };
+template <> struct mask<float>  { using type = maskf_t; };
+template <> struct mask<double> { using type = mask_t; };
 template <typename T>
 bool to_bool(T *x, size_t n) {
-	typedef typename mask<T>::type mask_type;
+	using  mask_type = typename mask<T>::type;
 	decltype(mask_type::i) r{0};
 	for(size_t i=0; i<n; ++i) {
 		r |= mask_type(x[i]).i;
@@ -31,7 +31,7 @@ bool to_bool(T *x, size_t n) {
 }
 template <typename T>
 bool to_bool(T f) {
-	typedef typename T::value_type value_type;
+	using value_type = typename T::value_type;
 	value_type *x = reinterpret_cast<value_type*>(&(f.val));
 	return to_bool(x, T::size);
 }
@@ -62,7 +62,7 @@ void combine(cksimd<double> &mask, bool v) {
 }
 template <typename T>
 std::ostream& operator<<(std::ostream &o, cksimd<T> f) {
-	typedef typename cksimd<T>::value_type value_type;
+	using value_type = typename cksimd<T>::value_type;
 	value_type *x = reinterpret_cast<value_type*>(&(f.val));
 	o << '{' << x[0];
 	if(cksimd<T>::size >= 2) {
