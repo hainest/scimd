@@ -7,11 +7,11 @@
 
 namespace ck_simd {
 
-	template <> struct simd_category<float>  { typedef scalar_float_tag type; };
-	template <> struct simd_category<double> { typedef scalar_double_tag type; };
+	template <> struct simd_category<float>  { using type = scalar_float_tag; };
+	template <> struct simd_category<double> { using type = scalar_double_tag; };
 
-	template <> struct simd_type<float>  { typedef float  type; };
-	template <> struct simd_type<double> { typedef double type; };
+	template <> struct simd_type<float>  { using type = float; };
+	template <> struct simd_type<double> { using type = double; };
 
 	namespace {
 		union mask_t  {

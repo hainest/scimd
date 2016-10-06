@@ -5,11 +5,11 @@
 
 namespace ck_simd {
 
-	template <> struct simd_category<float>  { typedef avx_float_tag type; };
-	template <> struct simd_category<double> { typedef avx_double_tag type; };
+	template <> struct simd_category<float>  { using type = avx_float_tag; };
+	template <> struct simd_category<double> { using type = avx_double_tag; };
 
-	template <> struct simd_type<float>  { typedef __m256  type; };
-	template <> struct simd_type<double> { typedef __m256d type; };
+	template <> struct simd_type<float>  { using type = __m256; };
+	template <> struct simd_type<double> { using type = __m256d; };
 
 	/**
 	 * 	Tag dispatch is used here because the gcc ABI before gcc-4.9
