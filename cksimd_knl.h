@@ -16,24 +16,6 @@ namespace ck_simd {
 	template <> struct bool_type<double> { using type = __mmask8; };
 
 	namespace {
-//		union punf {
-//			float f; uint32_t i;
-//			punf(uint32_t i) : i{i} {}
-//		};
-//		union pund {
-//			double d; uint64_t i;
-//			pund(uint64_t i) : i{i} {}
-//		};
-//
-//		template <typename T>
-//		struct true_type {};
-//		template<> struct true_type<knl_float_tag> {
-//			operator __mmask16() { return _mm512_set1_ps(punf(0xffffffff).f); }
-//		};
-//		template<> struct true_type<knl_double_tag> {
-//			operator __mmask8() { return _mm512_set1_pd(pund(0xffffffffffffffff).d); }
-//		};
-
 		template <typename T>
 		struct mask_t {};
 		template<> struct mask_t<knl_float_tag> { static const int value = 0xffff; };
