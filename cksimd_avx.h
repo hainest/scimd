@@ -2,6 +2,7 @@
 
 #include <immintrin.h>
 #include "cksimd_traits.h"
+#include <cstdint>
 
 namespace ck_simd {
 
@@ -11,10 +12,176 @@ namespace ck_simd {
 	template <> struct simd_type<float>  { using type = __m256; };
 	template <> struct simd_type<double> { using type = __m256d; };
 
+	template <> struct bool_type<float> { using type = __m256; };
+	template <> struct bool_type<double> { using type = __m256d; };
+
+	namespace {
+		union punf {
+			float f; uint32_t i;
+			punf(uint32_t i) : i{i} {}
+		};
+		union pund {
+			double d; uint64_t i;
+			pund(uint64_t i) : i{i} {}
+		};
+
+		template <typename T>
+		struct true_type {};
+		template<> struct true_type<avx_float_tag> {
+			operator __m256() { return _mm256_set1_ps(punf(0xffffffff).f); }
+		};
+		template<> struct true_type<avx_double_tag> {
+			operator __m256d() { return _mm256_set1_pd(pund(0xffffffffffffffff).d); }
+		};
+
+		template <typename T>
+		struct mask_t {};
+		template<> struct mask_t<avx_float_tag> { static const int value = 0xff; };
+		template<> struct mask_t<avx_double_tag> { static const int value = 0xf; };
+	}
+
 	/**
 	 * 	Tag dispatch is used here because the gcc ABI before gcc-4.9
 	 * 	does not properly mangle the SIMD types.
 	 */
+	static inline __m256 zero(avx_float_tag) {
+		return _mm256_setzero_ps();
+	}
+	static inline __m256d zero(avx_double_tag) {
+		return _mm256_setzero_pd();
+	}
+	static inline __m256 set1(float x, avx_float_tag) {
+		return _mm256_set1_ps(x);
+	}
+	static inline __m256d set1(double x, avx_double_tag) {
+		return _mm256_set1_pd(x);
+	}
+	/*************************************************************************/
+	static inline __m256 neg(__m256 x, avx_float_tag) {
+		return _mm256_sub_ps(_mm256_setzero_ps(), x);
+	}
+	static inline __m256d neg(__m256d x, avx_double_tag) {
+		return _mm256_sub_pd(_mm256_setzero_pd(), x);
+	}
+	static inline __m256 add(__m256 x, __m256 y, avx_float_tag) {
+		return _mm256_add_ps(x, y);
+	}
+	static inline __m256d add(__m256d x, __m256d y, avx_double_tag) {
+		return _mm256_add_pd(x, y);
+	}
+	static inline __m256 sub(__m256 x, __m256 y, avx_float_tag) {
+		return _mm256_sub_ps(x, y);
+	}
+	static inline __m256d sub(__m256d x, __m256d y, avx_double_tag) {
+		return _mm256_sub_pd(x, y);
+	}
+	static inline __m256 mul(__m256 x, __m256 y, avx_float_tag) {
+		return _mm256_mul_ps(x, y);
+	}
+	static inline __m256d mul(__m256d x, __m256d y, avx_double_tag) {
+		return _mm256_mul_pd(x, y);
+	}
+	static inline __m256 div(__m256 x, __m256 y, avx_float_tag) {
+		return _mm256_div_ps(x, y);
+	}
+	static inline __m256d div(__m256d x, __m256d y, avx_double_tag) {
+		return _mm256_div_pd(x, y);
+	}
+	/*************************************************************************/
+	static inline __m256 max(__m256 x, __m256 y, avx_float_tag) {
+		return _mm256_max_ps(x, y);
+	}
+	static inline __m256d max(__m256d x, __m256d y, avx_double_tag) {
+		return _mm256_max_pd(x, y);
+	}
+	static inline __m256 min(__m256 x, __m256 y, avx_float_tag) {
+		return _mm256_min_ps(x, y);
+	}
+	static inline __m256d min(__m256d x, __m256d y, avx_double_tag) {
+		return _mm256_min_pd(x, y);
+	}
+	/*************************************************************************/
+	static inline __m256 less(__m256 x, __m256 y, avx_float_tag) {
+		return _mm256_cmp_ps(x, y, _CMP_LT_OQ);
+	}
+	static inline __m256d less(__m256d x, __m256d y, avx_double_tag) {
+		return _mm256_cmp_pd(x, y, _CMP_LT_OQ);
+	}
+	static inline __m256 greater(__m256 x, __m256 y, avx_float_tag) {
+		return _mm256_cmp_ps(x, y, _CMP_GT_OQ);
+	}
+	static inline __m256d greater(__m256d x, __m256d y, avx_double_tag) {
+		return _mm256_cmp_pd(x, y, _CMP_GT_OQ);
+	}
+	static inline __m256 less_eq(__m256 x, __m256 y, avx_float_tag) {
+		return _mm256_cmp_ps(x, y, _CMP_LE_OQ);
+	}
+	static inline __m256d less_eq(__m256d x, __m256d y, avx_double_tag) {
+		return _mm256_cmp_pd(x, y, _CMP_LE_OQ);
+	}
+	static inline __m256 greater_eq(__m256 x, __m256 y, avx_float_tag) {
+		return _mm256_cmp_ps(x, y, _CMP_GE_OQ);
+	}
+	static inline __m256d greater_eq(__m256d x, __m256d y, avx_double_tag) {
+		return _mm256_cmp_pd(x, y, _CMP_GE_OQ);
+	}
+	/*************************************************************************/
+	static inline __m256 logical_and(__m256 x, __m256 y, avx_float_tag) {
+		return _mm256_and_ps(x, y);
+	}
+	static inline __m256d logical_and(__m256d x, __m256d y, avx_double_tag) {
+		return _mm256_and_pd(x, y);
+	}
+	static inline __m256 logical_or(__m256 x, __m256 y, avx_float_tag) {
+		return _mm256_or_ps(x, y);
+	}
+	static inline __m256d logical_or(__m256d x, __m256d y, avx_double_tag) {
+		return _mm256_or_pd(x, y);
+	}
+	static inline __m256 logical_xor(__m256 x, __m256 y, avx_float_tag) {
+		return _mm256_xor_ps(x, y);
+	}
+	static inline __m256d logical_xor(__m256d x, __m256d y, avx_double_tag) {
+		return _mm256_xor_pd(x, y);
+	}
+	static inline __m256 logical_not(__m256 x, avx_float_tag) {
+		return _mm256_andnot_ps(x, true_type<avx_float_tag>());
+	}
+	static inline __m256d logical_not(__m256d x, avx_double_tag) {
+		return _mm256_andnot_pd(x, true_type<avx_double_tag>());
+	}
+	static inline bool logical_all(__m256 x, avx_float_tag) {
+		return _mm256_movemask_ps(x) == mask_t<avx_float_tag>::value;
+	}
+	static inline bool logical_all(__m256d x, avx_double_tag) {
+		return _mm256_movemask_pd(x) == mask_t<avx_double_tag>::value;
+	}
+	static inline bool logical_none(__m256 x, avx_float_tag) {
+		return _mm256_movemask_ps(x) == 0;
+	}
+	static inline bool logical_none(__m256d x, avx_double_tag) {
+		return _mm256_movemask_pd(x) == 0;
+	}
+	/*************************************************************************/
+	static inline void store(float *p, __m256 x, avx_float_tag) {
+		_mm256_storeu_ps(p, x);
+	}
+	static inline void store(double *p, __m256d x, avx_double_tag) {
+		_mm256_storeu_pd(p, x);
+	}
+	static inline __m256 load(float const* p, avx_float_tag) {
+		return _mm256_loadu_ps(p);
+	}
+	static inline __m256d load(double const* p, avx_double_tag) {
+		return _mm256_loadu_pd(p);
+	}
+	static inline __m256 blend(__m256 x, __m256 y, __m256 mask, avx_float_tag) {
+		return _mm256_blendv_ps(x, y, mask);
+	}
+	static inline __m256d blend(__m256d x, __m256d y, __m256d mask, avx_double_tag) {
+		return _mm256_blendv_pd(x, y, mask);
+	}
+	/*************************************************************************/
 	static inline __m256 sqrt(__m256 x, avx_float_tag) {
 		return _mm256_sqrt_ps(x);
 	}
@@ -53,142 +220,5 @@ namespace ck_simd {
 		__m256d poly = _mm256_add_pd(_mm256_mul_pd(r2, t3), t1);
 		return _mm256_add_pd(_mm256_mul_pd(_mm256_mul_pd(x, r), poly), x);
 	}
-	static inline __m256 zero(avx_float_tag) {
-		return _mm256_setzero_ps();
-	}
-	static inline __m256d zero(avx_double_tag) {
-		return _mm256_setzero_pd();
-	}
-	static inline __m256 set1(float x, avx_float_tag) {
-		return _mm256_set1_ps(x);
-	}
-	static inline __m256d set1(double x, avx_double_tag) {
-		return _mm256_set1_pd(x);
-	}
-	static inline __m256 neg(__m256 x, avx_float_tag) {
-		return _mm256_sub_ps(_mm256_setzero_ps(), x);
-	}
-	static inline __m256d neg(__m256d x, avx_double_tag) {
-		return _mm256_sub_pd(_mm256_setzero_pd(), x);
-	}
-	static inline __m256 add(__m256 x, __m256 y, avx_float_tag) {
-		return _mm256_add_ps(x, y);
-	}
-	static inline __m256d add(__m256d x, __m256d y, avx_double_tag) {
-		return _mm256_add_pd(x, y);
-	}
-	static inline __m256 sub(__m256 x, __m256 y, avx_float_tag) {
-		return _mm256_sub_ps(x, y);
-	}
-	static inline __m256d sub(__m256d x, __m256d y, avx_double_tag) {
-		return _mm256_sub_pd(x, y);
-	}
-	static inline __m256 mul(__m256 x, __m256 y, avx_float_tag) {
-		return _mm256_mul_ps(x, y);
-	}
-	static inline __m256d mul(__m256d x, __m256d y, avx_double_tag) {
-		return _mm256_mul_pd(x, y);
-	}
-	static inline __m256 div(__m256 x, __m256 y, avx_float_tag) {
-		return _mm256_div_ps(x, y);
-	}
-	static inline __m256d div(__m256d x, __m256d y, avx_double_tag) {
-		return _mm256_div_pd(x, y);
-	}
-	static inline __m256 mask_and(__m256 x, __m256 y, avx_float_tag) {
-		return _mm256_and_ps(x, y);
-	}
-	static inline __m256d mask_and(__m256d x, __m256d y, avx_double_tag) {
-		return _mm256_and_pd(x, y);
-	}
-	static inline __m256 mask_or(__m256 x, __m256 y, avx_float_tag) {
-		return _mm256_or_ps(x, y);
-	}
-	static inline __m256d mask_or(__m256d x, __m256d y, avx_double_tag) {
-		return _mm256_or_pd(x, y);
-	}
-	static inline __m256 mask_xor(__m256 x, __m256 y, avx_float_tag) {
-		return _mm256_xor_ps(x, y);
-	}
-	static inline __m256d mask_xor(__m256d x, __m256d y, avx_double_tag) {
-		return _mm256_xor_pd(x, y);
-	}
-	static inline __m256 mask_andnot(__m256 x, __m256 y, avx_float_tag) {
-		return _mm256_andnot_ps(x, y);
-	}
-	static inline __m256d mask_andnot(__m256d x, __m256d y, avx_double_tag) {
-		return _mm256_andnot_pd(x, y);
-	}
-	static inline __m256 less(__m256 x, __m256 y, avx_float_tag) {
-		return _mm256_cmp_ps(x, y, _CMP_LT_OQ);
-	}
-	static inline __m256d less(__m256d x, __m256d y, avx_double_tag) {
-		return _mm256_cmp_pd(x, y, _CMP_LT_OQ);
-	}
-	static inline __m256 greater(__m256 x, __m256 y, avx_float_tag) {
-		return _mm256_cmp_ps(x, y, _CMP_GT_OQ);
-	}
-	static inline __m256d greater(__m256d x, __m256d y, avx_double_tag) {
-		return _mm256_cmp_pd(x, y, _CMP_GT_OQ);
-	}
-	static inline __m256 less_eq(__m256 x, __m256 y, avx_float_tag) {
-		return _mm256_cmp_ps(x, y, _CMP_LE_OQ);
-	}
-	static inline __m256d less_eq(__m256d x, __m256d y, avx_double_tag) {
-		return _mm256_cmp_pd(x, y, _CMP_LE_OQ);
-	}
-	static inline __m256 greater_eq(__m256 x, __m256 y, avx_float_tag) {
-		return _mm256_cmp_ps(x, y, _CMP_GE_OQ);
-	}
-	static inline __m256d greater_eq(__m256d x, __m256d y, avx_double_tag) {
-		return _mm256_cmp_pd(x, y, _CMP_GE_OQ);
-	}
-	static inline __m256 equals(__m256 x, __m256 y, avx_float_tag) {
-		return _mm256_cmp_ps(x, y, _CMP_EQ_OQ);
-	}
-	static inline __m256d equals(__m256d x, __m256d y, avx_double_tag) {
-		return _mm256_cmp_pd(x, y, _CMP_EQ_OQ);
-	}
-	static inline int movemask(__m256 x, avx_float_tag) {
-		return _mm256_movemask_ps(x);
-	}
-	static inline int movemask(__m256d x, avx_double_tag) {
-		return _mm256_movemask_pd(x);
-	}
-	static inline void store(float *p, __m256 x, avx_float_tag, aligned_store_tag) {
-		_mm256_store_ps(p, x);
-	}
-	static inline void store(double *p, __m256d x, avx_double_tag, aligned_store_tag) {
-		_mm256_store_pd(p, x);
-	}
-	static inline void store(float *p, __m256 x, avx_float_tag, unaligned_store_tag) {
-		_mm256_storeu_ps(p, x);
-	}
-	static inline void store(double *p, __m256d x, avx_double_tag, unaligned_store_tag) {
-		_mm256_storeu_pd(p, x);
-	}
-	static inline __m256 max(__m256 x, __m256 y, avx_float_tag) {
-		return _mm256_max_ps(x, y);
-	}
-	static inline __m256d max(__m256d x, __m256d y, avx_double_tag) {
-		return _mm256_max_pd(x, y);
-	}
-	static inline __m256 min(__m256 x, __m256 y, avx_float_tag) {
-		return _mm256_min_ps(x, y);
-	}
-	static inline __m256d min(__m256d x, __m256d y, avx_double_tag) {
-		return _mm256_min_pd(x, y);
-	}
-	static inline __m256 load(float const* p, avx_float_tag, aligned_load_tag) {
-		return _mm256_load_ps(p);
-	}
-	static inline __m256d load(double const* p, avx_double_tag, aligned_load_tag) {
-		return _mm256_load_pd(p);
-	}
-	static inline __m256 load(float const* p, avx_float_tag, unaligned_load_tag) {
-		return _mm256_loadu_ps(p);
-	}
-	static inline __m256d load(double const* p, avx_double_tag, unaligned_load_tag) {
-		return _mm256_loadu_pd(p);
-	}
+
 };
