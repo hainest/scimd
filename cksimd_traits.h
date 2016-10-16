@@ -14,15 +14,14 @@ namespace ck_simd {
 	struct avx_double_tag {};
 	struct scalar_float_tag {};
 	struct scalar_double_tag {};
-
-	// Alignment tags
-	struct aligned_load_tag {};
-	struct unaligned_load_tag {};
-	struct aligned_store_tag {};
-	struct unaligned_store_tag {};
+	struct knl_float_tag {};
+	struct knl_double_tag {};
 
 	template <typename T>
 	struct simd_type {};
+
+	template <typename T>
+	struct bool_type {};
 
 	template <typename T>
 	struct is_scalar {
@@ -43,5 +42,12 @@ namespace ck_simd {
 		static const bool value =
 				std::is_same<T, sse_float_tag()>::value ||
 				std::is_same<T, sse_double_tag()>::value;
+	};
+
+	template <typename T>
+	struct is_knl {
+		static const bool value =
+				std::is_same<T, knl_float_tag()>::value ||
+				std::is_same<T, knl_double_tag()>::value;
 	};
 }
