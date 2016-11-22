@@ -116,8 +116,8 @@ struct cksimd {
 	friend cksimd max (cksimd x, cksimd b) { return ck_simd::max(x.val, b.val, category()); }
 	friend cksimd min (cksimd x, cksimd b) { return ck_simd::min(x.val, b.val, category()); }
 
-	void store(value_type *p) { ck_simd::store(p, val, category()); }
-	void load (value_type *p) { val = ck_simd::load(p, category()); }
+	void store(value_type      * p) { ck_simd::store(p, val, category()); }
+	void load (value_type const* p) { val = ck_simd::load(p, category()); }
 
 	cksimd blend(cksimd x, conditional_t<cksimd> mask) { val = ck_simd::blend(val, x.val, mask.val, category()); return *this; }
 
