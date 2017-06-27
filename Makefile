@@ -1,5 +1,5 @@
 STD		 = -std=c++11
-CXXFLAGS = -Wall -Wextra
+CXXFLAGS = -Wall -Wextra -Werror -Wsign-compare -Wsign-conversion -Wnarrowing
 OPT    	 = -O3
 ARCH	 = -m64 -mfpmath=sse
 
@@ -37,12 +37,9 @@ $(EXEC) : $(OBJS)
 	@ $(CXX) -o $@ $< $(LNFLAGS) $(OMP) $(LDFLAGS)
 
 .PHONY: example
-#SIMD := -DCMK_USE_SSE -msse4.2
-#SIMD := -DCMK_USE_AVX -mavx
-WARN := -Wall -Wextra -Werror -Wsign-compare -Wsign-conversion -Wnarrowing
 example:
-	g++ $(SIMD) $(WARN) -std=c++11 -O3 -c -o example.o example.cpp
-	objdump -D -j .text -M intel example.o | c++filt > example.asm
+	$(CXX) $(CXXFLAGS) $(STD) $(ARCH) $(OPT) -c -o example.o example.cpp
+	objdump -D -M intel example.o | c++filt > example.asm
 
 clean:
 	@ rm -f $(OBJS) $(EXEC)
