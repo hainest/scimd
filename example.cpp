@@ -1,6 +1,60 @@
+#include "example.hpp"
 #include "cksimd.h"
+#include <iostream>
 
-using cosmoType = double;
+template<typename T>
+std::ostream& operator<<(std::ostream &o, cksimd<T> f) {
+	using value_type = typename cksimd<T>::value_type;
+	value_type *x = reinterpret_cast<value_type*>(&(f.val));
+	constexpr auto N = cksimd<T>::size;
+	o << '{' << x[0];
+	if (N >= 2) {
+		o << ' ' << x[1];
+	if (N >= 4) {
+		o << ' ' << x[2] << ' ' << x[3];
+	if (N >= 8) {
+		o << ' ' << x[4] << ' ' << x[5] << ' ' << x[6] << ' ' << x[7];
+	if (N == 16) {
+		o << ' ' << x[8] << ' ' << x[9] << ' ' << x[10] << ' ' << x[11];
+		o << ' ' << x[12] << ' ' << x[13] << ' ' << x[14] << ' ' << x[15];
+	}
+	}}}
+	return o << '}';
+}
+
+template <typename T>
+void SPLINE(cksimd<T> r2, cksimd<T> twoh, cksimd<T> &a, cksimd<T> &b);
+
+template <typename T>
+void test(size_t N) {
+	auto particles = make_particles<T>(N);
+
+	{
+		/*
+		 * 	Testcase where all(r2 >= (twoh * twoh)) == true
+		 */
+		auto twoh = particles;
+		auto r2 = particles * particles + static_cast<T>(2.0);
+		auto cur_particle = std::begin(particles);
+
+		do {
+			cksimd<T> x, y, z;
+			auto end = x.pack(cur_particle, std::end(particles), [](particle<T> p){ return p.x; });
+			y.pack(cur_particle, end, [](particle<T> p){ return p.y; });
+			z.pack(cur_particle, end, [](particle<T> p){ return p.z; });
+
+//			SPLINE(r2, twoh, a, b);
+			SPLINE(x, y, x, y);
+			std::cout << x << '\n';
+		} while(cur_particle != std::end(particles));
+	}
+}
+
+int main() {
+	constexpr size_t N = 64;
+	test<float>(N);
+//	test<double>(N);
+}
 
 template <typename T>
 void SPLINE(cksimd<T> r2, cksimd<T> twoh, cksimd<T> &a, cksimd<T> &b) {
@@ -71,3 +125,53 @@ void SPLINE(cksimd<T> r2, cksimd<T> twoh, cksimd<T> &a, cksimd<T> &b) {
 		b.blend(b1, !mask);
 	}
 }
+
+//inline int partBucketForce(ExternalGravityParticle *part, Tree::GenericTreeNode *req,
+//						   GravityParticle **activeParticles, Vector3D<cosmoType> offset,
+//						   int nActiveParts) {
+//	Vector3D <SSEcosmoType> r;
+//	SSEcosmoType rsq;
+//	SSEcosmoType twoh, a, b;
+//
+//	for (int i = 0; i < nActiveParts; i += SSE_VECTOR_WIDTH) {
+//		Vector3D<SSEcosmoType> packedPos(
+//			SSELoad(SSEcosmoType, activeParticles, i, ->position.x),
+//			SSELoad(SSEcosmoType, activeParticles, i, ->position.y),
+//			SSELoad(SSEcosmoType, activeParticles, i, ->position.z)
+//		);
+//		SSELoad(SSEcosmoType packedSoft, activeParticles, i, ->soft);
+//
+//		r = -packedPos + offset + part->position;
+//		rsq = r.lengthSquared();
+//		twoh = part->soft + packedSoft;
+//		SSEcosmoType select = rsq > COSMO_CONST(0.0);
+//		int compare = movemask(select);
+//		if (compare) {
+//			SPLINE(rsq, twoh, a, b);
+//			if ((~compare) & cosmoMask) {
+//				a = select & a;
+//				b = select & b;
+//			}
+//			SSEcosmoType SSELoad(packedMass, activeParticles, i, ->mass);
+//			SSEcosmoType SSELoad(packedDtGrav, activeParticles, i, ->dtGrav);
+//			Vector3D<SSEcosmoType> packedAcc(
+//				SSELoad(SSEcosmoType, activeParticles, i, ->treeAcceleration.x),
+//				SSELoad(SSEcosmoType, activeParticles, i, ->treeAcceleration.y),
+//				SSELoad(SSEcosmoType, activeParticles, i, ->treeAcceleration.z)
+//			);
+//			SSEcosmoType SSELoad(packedPotential, activeParticles, i, ->potential);
+//
+//			SSEcosmoType idt2 = (packedMass + part->mass) * b;
+//			idt2 = max(idt2, packedDtGrav);
+//			packedAcc += r * (b * part->mass);
+//			packedPotential -= part->mass * a;
+//
+//			SSEStore(packedAcc.x, activeParticles, i, ->treeAcceleration.x);
+//			SSEStore(packedAcc.y, activeParticles, i, ->treeAcceleration.y);
+//			SSEStore(packedAcc.z, activeParticles, i, ->treeAcceleration.z);
+//			SSEStore(packedPotential, activeParticles, i, ->potential);
+//			SSEStore(idt2, activeParticles, i, ->dtGrav);
+//		}
+//	}
+//	return nActiveParts;
+//}
