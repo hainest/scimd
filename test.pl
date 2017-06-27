@@ -1,9 +1,5 @@
 use strict;
 use warnings;
-use Getopt::Long qw(GetOptions);
-
-my $legacy = 0;
-GetOptions('legacy'=>\$legacy);
 
 sub execute($) {
 	my $cmd = shift;
