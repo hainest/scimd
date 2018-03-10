@@ -78,13 +78,16 @@ void test_memory() {
 		REQUIRE_ALL_LTE(7.7, (out_arr[6] - in_arr[6]), tol)
 		REQUIRE_ALL_LTE(7.6, (out_arr[5] - in_arr[5]), tol)
 		REQUIRE_ALL_LTE(7.5, (out_arr[4] - in_arr[4]), tol)
+		/* fall-thru */
 		/* no break */
 	case 4:
 		REQUIRE_ALL_LTE(7.4, (out_arr[3] - in_arr[3]), tol)
 		REQUIRE_ALL_LTE(7.3, (out_arr[2] - (2.0 + in_arr[2])), tol)
+		/* fall-thru */
 		/* no break */
 	case 2:
 		REQUIRE_ALL_LTE(7.2, (out_arr[1] - (2.0 + in_arr[1])), tol)
+		/* fall-thru */
 		/* no break */
 	case 1:
 		REQUIRE_ALL_LTE(7.1, (out_arr[0] - (2.0 + in_arr[0])), tol)
