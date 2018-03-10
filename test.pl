@@ -12,7 +12,7 @@ my @architectures = ('sse', 'avx', 'scalar');
 
 for my $c (@compilers) {
 	for my $arch (@architectures) {
-		print "$c, $arch : ";
+		print "$c, $arch :\n";
 		execute("make CXX=$c clean $arch");
 		execute("./test");
 	}
