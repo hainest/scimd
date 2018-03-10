@@ -8,7 +8,7 @@ sub execute($) {
 }
 
 my @compilers = (@ARGV) ? @ARGV : ('g++-4.8', 'g++-4.9', 'g++-5', 'g++-6', 'icc', 'clang++-3.7', 'clang++-3.8', 'clang++-3.9');
-my @architectures = ('sse', 'avx', 'scalar');
+my @architectures = ('sse', 'avx', 'fma', 'scalar');
 
 for my $c (@compilers) {
 	for my $arch (@architectures) {
