@@ -10,6 +10,9 @@ SRCS := cksimd_test.cpp
 OBJS := $(patsubst %.cpp, %.o, $(SRCS))
 EXEC := test
 
+fma: ARCH += -mfma
+fma: all
+
 sse: ARCH += -msse4.2
 sse: all
 

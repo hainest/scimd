@@ -8,12 +8,12 @@ sub execute($) {
 }
 
 my @compilers = (@ARGV) ? @ARGV : ('g++-4.8', 'g++-4.9', 'g++-5', 'g++-6', 'icc', 'clang++-3.7', 'clang++-3.8', 'clang++-3.9');
-my @test_architectures = ('sse', 'avx', 'scalar');
+my @architectures = ('sse', 'avx', 'scalar');
 
 for my $c (@compilers) {
-	for my $t (@test_architectures) {
-		print "$c, $t : ";
-		execute("make CXX=$c clean $t");
+	for my $arch (@architectures) {
+		print "$c, $arch : ";
+		execute("make CXX=$c clean $arch");
 		execute("./test");
 	}
 }
