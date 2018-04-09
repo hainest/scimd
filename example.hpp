@@ -20,6 +20,10 @@ struct particle {
 	particle operator+(particle val) { return {val.x + x, val.y + y, val.z + z}; };
 	particle operator*(particle val) { return {val.x * x, val.y * y, val.z * z}; };
 };
+template <typename T>
+std::ostream& operator<<(std::ostream &o, particle<T> const& p) {
+	return o << '[' << p.x << ',' << p.y << ',' << p.z << "]";
+}
 
 template <typename T>
 class particle_list {
@@ -30,7 +34,7 @@ public:
 	using iterator = typename decltype(particles)::iterator;
 	using const_iterator = typename decltype(particles)::const_iterator;
 
-	particle_list(size_t N) { particles.reserve(N); }
+	particle_list(size_t N) { particles.resize(N); }
 	particle_list(particle_list const&) = default;
 	particle_list& operator=(particle_list const&) = default;
 	particle_list(particle_list &&) = default;

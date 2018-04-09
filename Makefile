@@ -31,15 +31,16 @@ debug: all
 all: $(EXEC)
 
 %.o : %.cpp Makefile
-	@ $(CXX) $(STD) $(CXXFLAGS) $(OPT) $(ARCH) $(OMP) -c -o $@ $<
+	@ $(CXX) $(STD) $(CXXFLAGS) $(OPT) $(ARCH) -c -o $@ $<
 
 $(EXEC) : $(OBJS)
-	@ $(CXX) -o $@ $< $(LNFLAGS) $(OMP) $(LDFLAGS)
+	@ $(CXX) -o $@ $< $(LNFLAGS) $(LDFLAGS)
 
 .PHONY: example
 example:
-	$(CXX) $(CXXFLAGS) $(STD) $(ARCH) $(OPT) -c -o example.o example.cpp
-	objdump -D -M intel example.o | c++filt > example.asm
+	@ $(CXX) $(CXXFLAGS) $(STD) $(ARCH) $(OPT) -c -o example.o example.cpp
+	@ objdump -D -M intel example.o | c++filt > example.asm
+	@ $(CXX) -o example example.o $(LNFLAGS) $(LDFLAGS)
 
 clean:
 	@ rm -f $(OBJS) $(EXEC)

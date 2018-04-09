@@ -29,25 +29,29 @@ template <typename T>
 void test(size_t N) {
 	auto particles = make_particles<T>(N);
 
-	{
-		/*
-		 * 	Testcase where all(r2 >= (twoh * twoh)) == true
-		 */
-		auto twoh = particles;
-		auto r2 = particles * particles + static_cast<T>(2.0);
-		auto cur_particle = std::begin(particles);
-
-		do {
-			cksimd<T> x, y, z;
-			auto end = x.pack(cur_particle, std::end(particles), [](particle<T> p){ return p.x; });
-			y.pack(cur_particle, end, [](particle<T> p){ return p.y; });
-			z.pack(cur_particle, end, [](particle<T> p){ return p.z; });
-
-//			SPLINE(r2, twoh, a, b);
-			SPLINE(x, y, x, y);
-			std::cout << x << '\n';
-		} while(cur_particle != std::end(particles));
+	for(auto p : particles) {
+		std::cout << p << '\n';
 	}
+
+//	{
+//		/*
+//		 * 	Testcase where all(r2 >= (twoh * twoh)) == true
+//		 */
+//		auto twoh = particles;
+//		auto r2 = particles * particles + static_cast<T>(2.0);
+//		auto cur_particle = std::begin(particles);
+//
+//		do {
+//			cksimd<T> x, y, z;
+//			auto end = x.pack(cur_particle, std::end(particles), [](particle<T> p){ return p.x; });
+//			y.pack(cur_particle, end, [](particle<T> p){ return p.y; });
+//			z.pack(cur_particle, end, [](particle<T> p){ return p.z; });
+//
+////			SPLINE(r2, twoh, a, b);
+//			SPLINE(x, y, x, y);
+//			std::cout << x << '\n';
+//		} while(cur_particle != std::end(particles));
+//	}
 }
 
 int main() {
