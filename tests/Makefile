@@ -22,7 +22,7 @@ avx: all
 knl: ARCH += $(if $(findstring icc, $(CXX)), -xMIC-AVX512, -march=knl)
 knl: all
 
-scalar: ARCH += -DCMK_SIMD_DISABLE_AVX -DCMK_SIMD_DISABLE_SSE -DCMK_SIMD_DISABLE_KNL
+scalar: ARCH += -DSCIMD_DISABLE_AVX -DSCIMD_DISABLE_SSE -DSCIMD_DISABLE_KNL
 scalar: all
 
 debug: SANITIZER	:= address

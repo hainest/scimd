@@ -6,11 +6,11 @@
  *  more than one instruction set, put them in separate translation
  *  units.
  */
-#if defined(__AVX512F__) && defined(__AVX512ER__) && defined(__AVX512PF__) && defined(__AVX512CD__) && !defined(CMK_SIMD_DISABLE_KNL)
+#if defined(__AVX512F__) && defined(__AVX512ER__) && defined(__AVX512PF__) && defined(__AVX512CD__) && !defined(SCIMD_DISABLE_KNL)
 	#include "arch/avx512.hpp"
-#elif defined(__AVX__) && !defined(CMK_SIMD_DISABLE_AVX)
+#elif defined(__AVX__) && !defined(SCIMD_DISABLE_AVX)
 	#include "arch/avx.hpp"
-#elif defined(__SSE4_2__) && !defined(CMK_SIMD_DISABLE_SSE)
+#elif defined(__SSE4_2__) && !defined(SCIMD_DISABLE_SSE)
 	#include "arch/sse.hpp"
 #else
 	#include "arch/scalar.hpp"
