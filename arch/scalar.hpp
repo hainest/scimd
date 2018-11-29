@@ -5,7 +5,7 @@
 #include <algorithm>
 #include "../traits.hpp"
 
-namespace ck_simd {
+namespace scimd {
 
 	template <> struct simd_category<float>  { using type = scalar_float_tag; };
 	template <> struct simd_category<double> { using type = scalar_double_tag; };

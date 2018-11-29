@@ -4,7 +4,7 @@
 #include "../traits.hpp"
 #include <cstdint>
 
-namespace ck_simd {
+namespace scimd {
 
 	template <> struct simd_category<float>  { using type = sse_float_tag; };
 	template <> struct simd_category<double> { using type = sse_double_tag; };

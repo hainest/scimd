@@ -74,18 +74,18 @@ std::ostream& operator<<(std::ostream &o, cksimd<T> f) {
 }
 
 #if defined(__AVX512F__) && defined(__AVX512ER__) && defined(__AVX512PF__) && defined(__AVX512CD__)
-	std::ostream& print(std::ostream &o, __mmask16 x, ck_simd::knl_float_tag) { return o << std::hex << x; }
-	std::ostream& print(std::ostream &o, __mmask8 x, ck_simd::knl_double_tag) { return o << std::hex << x; }
+	std::ostream& print(std::ostream &o, __mmask16 x, scimd::knl_float_tag) { return o << std::hex << x; }
+	std::ostream& print(std::ostream &o, __mmask8 x, scimd::knl_double_tag) { return o << std::hex << x; }
 #elif defined(__AVX__)
-	std::ostream& print(std::ostream &o, __m256 x, ck_simd::avx_float_tag) { return o << cksimd<float>(x); }
-	std::ostream& print(std::ostream &o, __m256d x, ck_simd::avx_double_tag) { return o << cksimd<double>(x); }
+	std::ostream& print(std::ostream &o, __m256 x, scimd::avx_float_tag) { return o << cksimd<float>(x); }
+	std::ostream& print(std::ostream &o, __m256d x, scimd::avx_double_tag) { return o << cksimd<double>(x); }
 #elif defined(__SSE4_2__)
-	std::ostream& print(std::ostream &o, __m128 x, ck_simd::sse_float_tag) { return o << cksimd<float>(x); }
-	std::ostream& print(std::ostream &o, __m128d x, ck_simd::sse_double_tag) { return o << cksimd<double>(x); }
+	std::ostream& print(std::ostream &o, __m128 x, scimd::sse_float_tag) { return o << cksimd<float>(x); }
+	std::ostream& print(std::ostream &o, __m128d x, scimd::sse_double_tag) { return o << cksimd<double>(x); }
 #endif
 
-std::ostream& print(std::ostream &o, bool x, ck_simd::scalar_float_tag) { return o << std::boolalpha << x; }
-std::ostream& print(std::ostream &o, bool x, ck_simd::scalar_double_tag) { return o << std::boolalpha << x; }
+std::ostream& print(std::ostream &o, bool x, scimd::scalar_float_tag) { return o << std::boolalpha << x; }
+std::ostream& print(std::ostream &o, bool x, scimd::scalar_double_tag) { return o << std::boolalpha << x; }
 
 template <typename T>
 std::ostream& operator<<(std::ostream &o, conditional_t<cksimd<T>> c) {

@@ -2,7 +2,7 @@
 
 #include <type_traits>
 
-namespace ck_simd {
+namespace scimd {
 
 	template <typename T>
 	struct simd_category {};
