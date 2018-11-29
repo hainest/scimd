@@ -6,7 +6,7 @@
  *  more than one instruction set, put them in separate translation
  *  units.
  */
-#if defined(__AVX512F__) && defined(__AVX512ER__) && defined(__AVX512PF__) && defined(__AVX512CD__) && !defined(SCIMD_DISABLE_KNL)
+#if defined(__AVX512F__) && defined(__AVX512ER__) && defined(__AVX512PF__) && defined(__AVX512CD__) && !defined(SCIMD_DISABLE_AVX512)
 	#include "arch/avx512.hpp"
 #elif defined(__AVX__) && !defined(SCIMD_DISABLE_AVX)
 	#include "arch/avx.hpp"

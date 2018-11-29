@@ -19,10 +19,10 @@ sse: all
 avx: ARCH += -mavx
 avx: all
 
-knl: ARCH += $(if $(findstring icc, $(CXX)), -xMIC-AVX512, -march=knl)
-knl: all
+avx512: ARCH += $(if $(findstring icc, $(CXX)), -xMIC-AVX512, -march=knl)
+avx512: all
 
-scalar: ARCH += -DSCIMD_DISABLE_AVX -DSCIMD_DISABLE_SSE -DSCIMD_DISABLE_KNL
+scalar: ARCH += -DSCIMD_DISABLE_AVX -DSCIMD_DISABLE_SSE -DSCIMD_DISABLE_AVX512
 scalar: all
 
 debug: SANITIZER	:= address

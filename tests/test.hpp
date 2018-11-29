@@ -74,8 +74,8 @@ std::ostream& operator<<(std::ostream &o, cksimd<T> f) {
 }
 
 #if defined(__AVX512F__) && defined(__AVX512ER__) && defined(__AVX512PF__) && defined(__AVX512CD__)
-	std::ostream& print(std::ostream &o, __mmask16 x, scimd::knl_float_tag) { return o << std::hex << x; }
-	std::ostream& print(std::ostream &o, __mmask8 x, scimd::knl_double_tag) { return o << std::hex << x; }
+	std::ostream& print(std::ostream &o, __mmask16 x, scimd::avx512_float_tag) { return o << std::hex << x; }
+	std::ostream& print(std::ostream &o, __mmask8 x, scimd::avx512_double_tag) { return o << std::hex << x; }
 #elif defined(__AVX__)
 	std::ostream& print(std::ostream &o, __m256 x, scimd::avx_float_tag) { return o << cksimd<float>(x); }
 	std::ostream& print(std::ostream &o, __m256d x, scimd::avx_double_tag) { return o << cksimd<double>(x); }
@@ -97,9 +97,9 @@ void show_simd_arch() {
 #define SHOW_ARCH(arch, status) std::cout << #arch " enabled: " #status "\n";
 
 #if defined(__AVX512F__) && defined(__AVX512ER__) && defined(__AVX512PF__) && defined(__AVX512CD__)
-	SHOW_ARCH(knl, yes)
+	SHOW_ARCH(avx512, yes)
 #else
-	SHOW_ARCH(knl, no)
+	SHOW_ARCH(avx512, no)
 #endif
 #ifdef __AVX__
 	SHOW_ARCH(avx, yes)

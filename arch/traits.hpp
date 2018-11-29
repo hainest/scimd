@@ -14,8 +14,8 @@ namespace scimd {
 	struct avx_double_tag {};
 	struct scalar_float_tag {};
 	struct scalar_double_tag {};
-	struct knl_float_tag {};
-	struct knl_double_tag {};
+	struct avx512_float_tag {};
+	struct avx512_double_tag {};
 
 	template <typename T>
 	struct simd_type {};
@@ -45,9 +45,9 @@ namespace scimd {
 	};
 
 	template <typename T>
-	struct is_knl {
+	struct is_avx512 {
 		static const bool value =
-				std::is_same<T, knl_float_tag()>::value ||
-				std::is_same<T, knl_double_tag()>::value;
+				std::is_same<T, avx512_float_tag()>::value ||
+				std::is_same<T, avx512_double_tag()>::value;
 	};
 }
