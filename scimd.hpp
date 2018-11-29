@@ -7,13 +7,13 @@
  *  units.
  */
 #if defined(__AVX512F__) && defined(__AVX512ER__) && defined(__AVX512PF__) && defined(__AVX512CD__) && !defined(CMK_SIMD_DISABLE_KNL)
-#include "arch/avx512.hpp"
+	#include "arch/avx512.hpp"
 #elif defined(__AVX__) && !defined(CMK_SIMD_DISABLE_AVX)
-#include "arch/avx.hpp"
+	#include "arch/avx.hpp"
 #elif defined(__SSE4_2__) && !defined(CMK_SIMD_DISABLE_SSE)
-#include "arch/sse.hpp"
+	#include "arch/sse.hpp"
 #else
-#include "arch/scalar.hpp"
+	#include "arch/scalar.hpp"
 #endif
 
 #include <type_traits>
