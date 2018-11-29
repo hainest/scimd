@@ -7,17 +7,17 @@
  *  units.
  */
 #if defined(__AVX512F__) && defined(__AVX512ER__) && defined(__AVX512PF__) && defined(__AVX512CD__) && !defined(CMK_SIMD_DISABLE_KNL)
-#include "cksimd_knl.h"
+#include "arch/avx512.hpp"
 #elif defined(__AVX__) && !defined(CMK_SIMD_DISABLE_AVX)
-#include "cksimd_avx.h"
+#include "arch/avx.hpp"
 #elif defined(__SSE4_2__) && !defined(CMK_SIMD_DISABLE_SSE)
-#include "cksimd_sse.h"
+#include "arch/sse.hpp"
 #else
-#include "cksimd_scalar.h"
+#include "arch/scalar.hpp"
 #endif
 
 #include <type_traits>
-#include "cksimd_traits.h"
+#include "arch/traits.hpp"
 
 namespace ck_simd {
 

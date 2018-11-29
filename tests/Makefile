@@ -6,7 +6,7 @@ ARCH	 = -m64 -mfpmath=sse
 .PHONY: all clean
 .DEFAULT_GOAL = all
 
-SRCS := cksimd_test.cpp
+SRCS := test.cpp
 OBJS := $(patsubst %.cpp, %.o, $(SRCS))
 EXEC := test
 
@@ -34,7 +34,7 @@ debug: all
 all: $(EXEC)
 
 %.o : %.cpp Makefile
-	@ $(CXX) $(STD) $(CXXFLAGS) $(OPT) $(ARCH) $(OMP) -c -o $@ $<
+	@ $(CXX) $(STD) -I.. $(CXXFLAGS) $(OPT) $(ARCH) $(OMP) -c -o $@ $<
 
 $(EXEC) : $(OBJS)
 	@ $(CXX) -o $@ $< $(LNFLAGS) $(OMP) $(LDFLAGS)

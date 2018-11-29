@@ -1,4 +1,4 @@
-#include "cksimd_test.hpp"
+#include "test.hpp"
 #include <cmath>
 #include <cstdlib>
 #include <string>

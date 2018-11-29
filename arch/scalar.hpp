@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <cmath>
 #include <algorithm>
-#include "cksimd_traits.h"
+#include "../traits.hpp"
 
 namespace ck_simd {
 

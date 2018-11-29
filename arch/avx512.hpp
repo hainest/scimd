@@ -1,7 +1,7 @@
 #pragma once
 
 #include <immintrin.h>
-#include "cksimd_traits.h"
+#include "../traits.hpp"
 #include <cstdint>
 
 namespace ck_simd {

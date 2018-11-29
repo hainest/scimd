@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cksimd.h"
+#include "scimd.hpp"
 #include <iostream>
 #include <iomanip>
 
