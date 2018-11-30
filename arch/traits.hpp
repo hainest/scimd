@@ -7,47 +7,14 @@ namespace scimd {
 	template <typename T>
 	struct simd_category {};
 
-	// Category tags
-	struct sse_float_tag {};
-	struct sse_double_tag {};
-	struct avx_float_tag {};
-	struct avx_double_tag {};
-	struct scalar_float_tag {};
-	struct scalar_double_tag {};
-	struct avx512_float_tag {};
-	struct avx512_double_tag {};
-
 	template <typename T>
 	struct simd_type {};
 
 	template <typename T>
 	struct bool_type {};
 
-	template <typename T>
-	struct is_scalar {
-		static const bool value =
-				std::is_same<T, scalar_float_tag()>::value ||
-				std::is_same<T, scalar_double_tag()>::value;
-	};
-
-	template <typename T>
-	struct is_avx {
-		static const bool value =
-				std::is_same<T, avx_float_tag()>::value ||
-				std::is_same<T, avx_double_tag()>::value;
-	};
-
-	template <typename T>
-	struct is_sse {
-		static const bool value =
-				std::is_same<T, sse_float_tag()>::value ||
-				std::is_same<T, sse_double_tag()>::value;
-	};
-
-	template <typename T>
-	struct is_avx512 {
-		static const bool value =
-				std::is_same<T, avx512_float_tag()>::value ||
-				std::is_same<T, avx512_double_tag()>::value;
-	};
+	namespace detail {
+		template <typename T>
+		struct is_scalar : std::false_type {};
+	}
 }

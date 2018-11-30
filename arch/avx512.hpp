@@ -6,6 +6,9 @@
 
 namespace scimd {
 
+	struct avx512_float_tag {};
+	struct avx512_double_tag {};
+
 	template <> struct simd_category<float>  { using type = avx512_float_tag; };
 	template <> struct simd_category<double> { using type = avx512_double_tag; };
 

@@ -67,7 +67,7 @@ struct cksimd {
 	template <typename U, typename =
 			typename std::enable_if<
 				  std::is_floating_point<U>::value &&
-				 !scimd::is_scalar<category()>::value, U>::type>
+				 !scimd::detail::is_scalar<category>::value, U>::type>
 	cksimd(U x) : val(scimd::set1(x, category())) {}
 
 	cksimd operator -()			const { return scimd::neg(val, 		category()); }
@@ -137,7 +137,7 @@ struct cksimd {
 	}
 
 	template <typename FwdIter, typename BinaryFunc>
-	typename std::enable_if<scimd::is_scalar<category()>::value, FwdIter>::type
+	typename std::enable_if<scimd::detail::is_scalar<category>::value, FwdIter>::type
 	unpack(FwdIter beg, FwdIter end, BinaryFunc f) {
 		f(*beg, val);
 		++beg;
@@ -146,7 +146,7 @@ struct cksimd {
 	}
 
 	template <typename FwdIter, typename BinaryFunc>
-	typename std::enable_if<!scimd::is_scalar<category()>::value, FwdIter>::type
+	typename std::enable_if<!scimd::detail::is_scalar<category>::value, FwdIter>::type
 	unpack(FwdIter beg, FwdIter end, BinaryFunc f) {
 		for(size_t i = 0; i < size && beg != end; i++) {
 			f(*beg, val[i]);
