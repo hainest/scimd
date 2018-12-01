@@ -73,6 +73,12 @@ std::ostream& operator<<(std::ostream &o, cksimd<T> f) {
 	return o << '}';
 }
 
+/*
+ * 	!! ----- DO NOT WRITE CODE LIKE THIS ----- !!
+ *
+ * 	This is not portable and is only for internal library testing purposes
+ *
+ */
 #if defined(__AVX512F__) && defined(__AVX512ER__) && defined(__AVX512PF__) && defined(__AVX512CD__)
 	std::ostream& print(std::ostream &o, __mmask16 x, scimd::avx512_float_tag) { return o << std::hex << x; }
 	std::ostream& print(std::ostream &o, __mmask8 x, scimd::avx512_double_tag) { return o << std::hex << x; }
