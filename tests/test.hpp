@@ -100,22 +100,24 @@ std::ostream& operator<<(std::ostream &o, conditional_t<cksimd<T>> c) {
 
 
 void show_simd_arch() {
-#define SHOW_ARCH(arch, status) std::cout << #arch " enabled: " #status "\n";
+#ifdef VERBOSE
+	#define SHOW_ARCH(arch, status) std::cout << #arch " enabled: " #status "\n";
 
-#if defined(__AVX512F__) && defined(__AVX512ER__) && defined(__AVX512PF__) && defined(__AVX512CD__)
-	SHOW_ARCH(avx512, yes)
-#else
-	SHOW_ARCH(avx512, no)
-#endif
-#ifdef __AVX__
-	SHOW_ARCH(avx, yes)
-#else
-	SHOW_ARCH(avx, no)
-#endif
-#ifdef __SSE4_2__
-	SHOW_ARCH(sse4.2, yes)
-#else
-	SHOW_ARCH(sse4.2, no)
+	#if defined(__AVX512F__) && defined(__AVX512ER__) && defined(__AVX512PF__) && defined(__AVX512CD__)
+		SHOW_ARCH(avx512, yes)
+	#else
+		SHOW_ARCH(avx512, no)
+	#endif
+	#ifdef __AVX__
+		SHOW_ARCH(avx, yes)
+	#else
+		SHOW_ARCH(avx, no)
+	#endif
+	#ifdef __SSE4_2__
+		SHOW_ARCH(sse4.2, yes)
+	#else
+		SHOW_ARCH(sse4.2, no)
+	#endif
 #endif
 }
 
