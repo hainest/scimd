@@ -88,10 +88,10 @@ std::ostream& operator<<(std::ostream &o, cksimd<T> f) {
 #elif defined(__SSE4_2__)
 	std::ostream& print(std::ostream &o, __m128 x, scimd::sse_float_tag) { return o << cksimd<float>(x); }
 	std::ostream& print(std::ostream &o, __m128d x, scimd::sse_double_tag) { return o << cksimd<double>(x); }
+#else
+	std::ostream& print(std::ostream &o, bool x, scimd::scalar_float_tag) { return o << std::boolalpha << x; }
+	std::ostream& print(std::ostream &o, bool x, scimd::scalar_double_tag) { return o << std::boolalpha << x; }
 #endif
-
-std::ostream& print(std::ostream &o, bool x, scimd::scalar_float_tag) { return o << std::boolalpha << x; }
-std::ostream& print(std::ostream &o, bool x, scimd::scalar_double_tag) { return o << std::boolalpha << x; }
 
 template <typename T>
 std::ostream& operator<<(std::ostream &o, conditional_t<cksimd<T>> c) {
