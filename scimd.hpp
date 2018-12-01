@@ -16,7 +16,6 @@
 	#include "arch/scalar.hpp"
 #endif
 
-#include <type_traits>
 #include "arch/traits.hpp"
 
 namespace scimd {
