@@ -1,7 +1,7 @@
 #pragma once
 
 #include <nmmintrin.h>
-#include "../traits.hpp"
+#include "traits.hpp"
 #include <cstdint>
 
 namespace scimd {

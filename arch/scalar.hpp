@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <cmath>
 #include <algorithm>
-#include "../traits.hpp"
+#include "traits.hpp"
 
 namespace scimd {
 
