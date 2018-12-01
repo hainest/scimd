@@ -115,13 +115,13 @@ struct cksimd {
 	friend cksimd max (cksimd x, cksimd b) { return scimd::max(x.val, b.val, category()); }
 	friend cksimd min (cksimd x, cksimd b) { return scimd::min(x.val, b.val, category()); }
 
-	void store(value_type      * p) { scimd::store(p, val, category()); }
-	void load (value_type const* p) { val = scimd::load(p, category()); }
+	value_type      * store(value_type      * p) { scimd::store(p, val, category()); return p; }
+	value_type const* load (value_type const* p) { val = scimd::load(p, category()); return p; }
 
 	cksimd blend(cksimd x, conditional_t<cksimd> mask) { val = scimd::blend(val, x.val, mask.val, category()); return *this; }
 
 	template <typename FwdIter, typename UnaryFunc>
-	FwdIter pack(FwdIter beg, FwdIter end, UnaryFunc f, value_type default_val = value_type{}) {
+	FwdIter load(FwdIter beg, FwdIter end, UnaryFunc f, value_type default_val = value_type{}) {
 		value_type arr[size];
 		size_t i = 0;
 		for(; i < size && beg != end; i++) {
@@ -137,7 +137,7 @@ struct cksimd {
 
 	template <typename FwdIter, typename BinaryFunc>
 	typename std::enable_if<scimd::detail::is_scalar<category>::value, FwdIter>::type
-	unpack(FwdIter beg, FwdIter end, BinaryFunc f) {
+	store(FwdIter beg, FwdIter end, BinaryFunc f) {
 		f(*beg, val);
 		++beg;
 		(void)end;
@@ -146,7 +146,7 @@ struct cksimd {
 
 	template <typename FwdIter, typename BinaryFunc>
 	typename std::enable_if<!scimd::detail::is_scalar<category>::value, FwdIter>::type
-	unpack(FwdIter beg, FwdIter end, BinaryFunc f) {
+	store(FwdIter beg, FwdIter end, BinaryFunc f) {
 		for(size_t i = 0; i < size && beg != end; i++) {
 			f(*beg, val[i]);
 			++beg;

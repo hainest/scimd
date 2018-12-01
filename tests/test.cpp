@@ -44,17 +44,17 @@ void test_memory() {
 
 	cksimd<T> x;
 	asm volatile("simd_memory_begin%=:" :);
-	x.pack(std::begin(in_arr), std::end(in_arr), [](T x) {return x;});
+	x.load(std::begin(in_arr), std::end(in_arr), [](T x) {return x;});
 	asm volatile("simd_memory_end%=:" :);
 
 	x += 2.0;
 
 	T out_arr[N];
-	x.unpack(std::begin(out_arr), std::end(out_arr), [](T &x, T y) {x = y;});
+	x.store(std::begin(out_arr), std::end(out_arr), [](T &x, T y) {x = y;});
 
 	REQUIRE_ALL_LTE(1, (out_arr[0] - (2.0 + in_arr[0])), tol);
 
-	// Make sure the default pack value is working
+	// Make sure the default AoS->SoA load value is working
 	if (N > 4) {
 		REQUIRE_ALL(2, out_arr[5] != 2.0);
 	}
