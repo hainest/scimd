@@ -178,10 +178,12 @@ void test_operators() {
 	}
 
 	SECTION("range operators for T = " + std::string{fp_name<T>::value}) {
+		// These assume x and y are positive and y>x
 		REQUIRE(scimd::all((scimd::max(x, y) - y) <= tol));
 		REQUIRE(scimd::all((scimd::min(x, y) - x) <= tol));
+		REQUIRE(scimd::all(scimd::abs(x) >= x));
+		REQUIRE(scimd::all(scimd::abs(-x) >= x));
 	}
-
 }
 
 // Don't let the size get bigger than the underlying SIMD type

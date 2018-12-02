@@ -90,6 +90,12 @@ namespace scimd {
 	static inline __m512d min(__m512d x, __m512d y, avx512_double_tag) {
 		return _mm512_min_pd(x, y);
 	}
+	static inline __m512 abs(__m512 x, avx512_float_tag) {
+		return _mm512_abs_ps(x);
+	}
+	static inline __m512d abs(__m512d x, avx512_double_tag) {
+		return _mm512_abs_pd(x);
+	}
 	/*************************************************************************/
 	/*
 	 * 	__mmask{16|8} _mm512_mask_cmp_p{s|d}_mask (__mmask{16|8} k1, __m512{|d} a,

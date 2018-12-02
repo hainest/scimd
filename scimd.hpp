@@ -148,6 +148,9 @@ namespace scimd {
 		}
 	};
 
+	/* ----------------------------------------------------------
+	 * 			Range Functions
+	 *---------------------------------------------------------*/
 	template <typename T>
 	pack<T> max(pack<T> x, pack<T> b) {
 		return ::scimd::max(x.val, b.val, typename pack<T>::category());
@@ -155,6 +158,18 @@ namespace scimd {
 	template <typename T>
 	pack<T> min(pack<T> x, pack<T> b) {
 		return ::scimd::min(x.val, b.val, typename pack<T>::category());
+	}
+	template <typename T>
+	typename std::enable_if<!detail::is_avx512<T>::value, pack<T>>::type
+	abs(pack<T> x) {
+		auto const mask = (x < static_cast<T>(0.0));
+		x.blend(-x, mask);
+		return x;
+	}
+	template <typename T>
+	typename std::enable_if<detail::is_avx512<T>::value, pack<T>>::type
+	abs(pack<T> x) {
+		return ::scimd::abs(x, typename pack<T>::category());
 	}
 }
 
