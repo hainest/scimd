@@ -33,11 +33,6 @@ namespace scimd {
 	struct conditional_t {
 		typename T::bool_t val;
 		conditional_t(typename T::bool_t val) : val(val) {}
-
-		conditional_t operator &&(conditional_t x) const { return logical_and (val, x.val, typename T::category()); }
-		conditional_t operator ||(conditional_t x) const { return logical_or  (val, x.val, typename T::category()); }
-		conditional_t operator  ^(conditional_t x) const { return logical_xor (val, x.val, typename T::category()); }
-		conditional_t operator  !() 			   const { return logical_not (val, typename T::category()); }
 	};
 
 	template <typename T>

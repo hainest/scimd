@@ -19,24 +19,6 @@ namespace scimd {
 	template <> struct bool_type<double> { using type = __m128d; };
 
 	namespace {
-		union punf {
-			float f; uint32_t i;
-			punf(uint32_t i) : i{i} {}
-		};
-		union pund {
-			double d; uint64_t i;
-			pund(uint64_t i) : i{i} {}
-		};
-
-		template <typename T>
-		struct true_type {};
-		template<> struct true_type<sse_float_tag> {
-			operator __m128() { return _mm_set1_ps(punf(0xffffffff).f); }
-		};
-		template<> struct true_type<sse_double_tag> {
-			operator __m128d() { return _mm_set1_pd(pund(0xffffffffffffffff).d); }
-		};
-
 		template <typename T>
 		struct mask_t {};
 		template <> struct mask_t<sse_float_tag> { static const int value = 0xf; };
@@ -129,30 +111,6 @@ namespace scimd {
 		return _mm_cmpge_pd(x, y);
 	}
 	/*************************************************************************/
-	static inline __m128 logical_and(__m128 x, __m128 y, sse_float_tag) {
-		return _mm_and_ps(x, y);
-	}
-	static inline __m128d logical_and(__m128d x, __m128d y, sse_double_tag) {
-		return _mm_and_pd(x, y);
-	}
-	static inline __m128 logical_or(__m128 x, __m128 y, sse_float_tag) {
-		return _mm_or_ps(x, y);
-	}
-	static inline __m128d logical_or(__m128d x, __m128d y, sse_double_tag) {
-		return _mm_or_pd(x, y);
-	}
-	static inline __m128 logical_xor(__m128 x, __m128 y, sse_float_tag) {
-		return _mm_xor_ps(x, y);
-	}
-	static inline __m128d logical_xor(__m128d x, __m128d y, sse_double_tag) {
-		return _mm_xor_pd(x, y);
-	}
-	static inline __m128 logical_not(__m128 x, sse_float_tag) {
-		return _mm_andnot_ps(x, true_type<sse_float_tag>());
-	}
-	static inline __m128d logical_not(__m128d x, sse_double_tag) {
-		return _mm_andnot_pd(x, true_type<sse_double_tag>());
-	}
 	static inline bool logical_all(__m128 x, sse_float_tag) {
 		return _mm_movemask_ps(x) == mask_t<sse_float_tag>::value;
 	}

@@ -112,30 +112,6 @@ namespace scimd {
 		return x >= y;
 	}
 	/*************************************************************************/
-	static inline bool logical_and(bool x, bool y, scalar_float_tag) {
-		return x && y;
-	}
-	static inline bool logical_and(bool x, bool y, scalar_double_tag) {
-		return x && y;
-	}
-	static inline bool logical_or(bool x, bool y, scalar_float_tag) {
-		return x || y;
-	}
-	static inline bool logical_or(bool x, bool y, scalar_double_tag) {
-		return x || y;
-	}
-	static inline bool logical_xor(bool x, bool y, scalar_float_tag) {
-		return x ^ y;
-	}
-	static inline bool logical_xor(bool x, bool y, scalar_double_tag) {
-		return x ^ y;
-	}
-	static inline bool logical_not(bool x, scalar_float_tag) {
-		return !x;
-	}
-	static inline bool logical_not(bool x, scalar_double_tag) {
-		return !x;
-	}
 	static inline bool logical_all(bool x, scalar_float_tag) {
 		return x;
 	}

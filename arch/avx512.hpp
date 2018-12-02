@@ -35,10 +35,10 @@ namespace scimd {
 	static inline __m512d zero(avx512_double_tag) {
 		return _mm512_setzero_pd();
 	}
-	static inline __m512 set1(float x, knl_float_tag) {
+	static inline __m512 set1(float x, avx512_float_tag) {
 		return _mm512_set1_ps(x);
 	}
-	static inline __m512d set1(double x, knl_double_tag) {
+	static inline __m512d set1(double x, avx512_double_tag) {
 		return _mm512_set1_pd(x);
 	}
 	/*************************************************************************/
@@ -120,30 +120,6 @@ namespace scimd {
 		return _mm512_mask_cmp_pd_mask(mask_t<avx512_double_tag>::value, x, y, _CMP_GE_OQ);
 	}
 	/*************************************************************************/
-	static inline __mmask16 logical_and(__mmask16 x, __mmask16 y, avx512_float_tag) {
-		return _mm512_kand(x, y);
-	}
-	static inline __mmask8 logical_and(__mmask8 x, __mmask8 y, avx512_double_tag) {
-		return _mm512_kand(x, y);
-	}
-	static inline __mmask16 logical_or(__mmask16 x, __mmask16 y, avx512_float_tag) {
-		return _mm512_kor(x, y);
-	}
-	static inline __mmask8 logical_or(__mmask8 x, __mmask8 y, avx512_double_tag) {
-		return _mm512_kor(x, y);
-	}
-	static inline __mmask16 logical_xor(__mmask16 x, __mmask16 y, avx512_float_tag) {
-		return _mm512_kand(_mm512_kxor(x, y), mask_t<avx512_float_tag>::value);
-	}
-	static inline __mmask8 logical_xor(__mmask8 x, __mmask8 y, avx512_double_tag) {
-		return _mm512_kand(_mm512_kxor(x, y), mask_t<avx512_double_tag>::value);
-	}
-	static inline __mmask16 logical_not(__mmask16 x, avx512_float_tag) {
-		return _mm512_kand(_mm512_knot(x), mask_t<avx512_float_tag>::value);
-	}
-	static inline __mmask8 logical_not(__mmask8 x, avx512_double_tag) {
-		return _mm512_kand(_mm512_knot(x), mask_t<avx512_double_tag>::value);
-	}
 	static inline bool logical_all(__mmask16 x, avx512_float_tag) {
 		return _mm512_kand(mask_t<avx512_float_tag>::value, x) == mask_t<avx512_float_tag>::value;
 	}
