@@ -91,10 +91,21 @@ namespace scimd {
 		return _mm512_min_pd(x, y);
 	}
 	static inline __m512 abs(__m512 x, avx512_float_tag) {
+#if (defined(__GNU__) && __GNU__ > 7) || defined(__ICC__)
 		return _mm512_abs_ps(x);
+#else
+		auto const mask = _mm512_set1_epi32(0x7fffffff);
+		return (__m512) _mm512_and_epi32 ((__m512i)x,mask);
+#endif
 	}
 	static inline __m512d abs(__m512d x, avx512_double_tag) {
+		// _mm512_abs_pd is broken before gcc-9
+#if (defined(__GNU__) && __GNUC__ > 9) || defined(__ICC__)
 		return _mm512_abs_pd(x);
+#else
+		auto const mask = _mm512_set1_epi64 (0x7fffffffffffffffLL);
+		return (__m512d)_mm512_and_epi64 ((__m512i)x, mask);
+#endif
 	}
 	/*************************************************************************/
 	/*
