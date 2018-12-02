@@ -1,8 +1,89 @@
-#include "test.hpp"
+#include "catch2.hpp"
+#include "scimd.hpp"
 #include <cmath>
 #include <cstdlib>
 #include <string>
 #include <numeric>
+#include <array>
+#include <algorithm>
+
+template <typename T>
+struct fp_tol{};
+template <> struct fp_tol<float> { static constexpr float value = 2e-07; };
+template <> struct fp_tol<double> { static constexpr double value = 2e-16; };
+
+template <typename T>
+struct fp_name{};
+template <> struct fp_name<float> { static constexpr char const* value = "float"; };
+template <> struct fp_name<double> { static constexpr char const* value = "double"; };
+
+template <typename T>
+void test_memory() {
+	constexpr auto tol = fp_tol<T>::value;
+	constexpr auto N = scimd::cksimd<T>::size;
+	std::array<T, N> input;
+	std::iota(std::begin(input), std::end(input), 0.0f);
+
+	SECTION("load/store for T = " + std::string{fp_name<T>::value}) {
+		// use simple load of N values
+		scimd::cksimd<T> x;
+		asm volatile("scimd_load_begin%=:" :);
+		x.load(input.data());
+		asm volatile("scimd_load_end%=:" :);
+
+		// use lambda load of N values (no default used here)
+		scimd::cksimd<T> y;
+		asm volatile("scimd_load_lambda_begin%=:" :);
+		y.load(std::begin(input), std::end(input), [](T x) {return x;});
+		asm volatile("scimd_load_lambda_end%=:" :);
+
+		// x and y should be equal to within FP tolerance
+		REQUIRE(scimd::all((x-y) <= tol));
+
+		std::array<T,N> out_lambda;
+		x.store(std::begin(out_lambda), std::end(out_lambda), [](T &x, T y) {x = y;});
+
+		std::array<T, N> out_plain;
+		x.store(out_plain.data());
+
+		// Ensure the stored values are the same to within FP tolerance
+		auto const is_same =
+			std::equal(
+				std::begin(out_lambda),
+				std::end(out_lambda),
+				std::begin(out_plain),
+				[](T x, T y) { return (x-y) <= tol; }
+			);
+		REQUIRE(is_same);
+	}
+
+	SECTION("load/store with default for T = " + std::string{fp_name<T>::value}) {
+		// use lambda load of 1 value and fill the rest of the SIMD vector
+		// with the default value
+		scimd::cksimd<T> x;
+		asm volatile("scimd_load_lambda_def_begin%=:" :);
+		x.load(std::end(input)-1, std::end(input), [](T x) {return x;});
+		asm volatile("scimd_load_lambda_def_end%=:" :);
+
+		std::array<T,N> output;
+		x.store(output.data());
+
+		// The first element should be the last value in 'input'
+		// The rest should be T{} (the default)
+		std::array<T,N> expected = {{T{}}};
+		expected[0] = *(std::end(input)-1);
+
+		// Ensure the stored values are the same to within FP tolerance
+		auto const is_same =
+			std::equal(
+				std::begin(output),
+				std::end(output),
+				std::begin(expected),
+				[](T x, T y) { return (x-y) <= tol; }
+			);
+		REQUIRE(is_same);
+	}
+}
 
 template<typename T, typename U>
 struct answer {
@@ -13,99 +94,42 @@ struct answer {
 
 template<typename T, typename U, typename V>
 void test_mixed_mode(T x, U y, std::string const& name, answer<T, U> const& ans, V tol) {
-	SECTION("Testing mixed-mode for " + name);
+	SECTION("mixed-mode for " + name) {
+		asm volatile("arith_begin%=:" :);
+		U srty = sqrt(y);
+		auto rsrt = x / sqrt(y);
+		auto s = (((x + y) - ans.sum) <= tol);
+		auto d = (((x - y) - ans.diff) <= tol);
+		auto p = (((x * y) - ans.prod) <= tol);
+		auto q = (((x / y) - ans.quot) <= tol);
+		auto m = (srty - ans.srty) <= tol;
+		auto n = (rsrt - ans.rsrt) <= tol;
+		auto o = (rsqrt(y) - ans.prsqrt) <= tol;
+		asm volatile("arith_end%=:" :);
 
-	asm volatile("arith_begin%=:" :);
-	U srty = sqrt(y);
-	auto rsrt = x / sqrt(y);
-	auto s = (((x + y) - ans.sum) <= tol);
-	auto d = (((x - y) - ans.diff) <= tol);
-	auto p = (((x * y) - ans.prod) <= tol);
-	auto q = (((x / y) - ans.quot) <= tol);
-	auto m = (srty - ans.srty) <= tol;
-	auto n = (rsrt - ans.rsrt) <= tol;
-	auto o = (rsqrt(y) - ans.prsqrt) <= tol;
-	asm volatile("arith_end%=:" :);
-
-	REQUIRE_ALL(1, s && d && p && q);
-	REQUIRE_ALL(2, m);
-	REQUIRE_ALL(3, n);
-	REQUIRE_ALL(4, o);
-}
-
-template <typename T>
-void test_memory() {
-	SECTION("Testing memory for T = " + std::string{fp_name<T>::value});
-
-	constexpr auto tol = fp_tol<T>::value;
-	constexpr auto const N = scimd::cksimd<T>::size;
-	T in_arr[N];
-	std::iota(std::begin(in_arr), std::end(in_arr), 0.0f);
-
-	scimd::cksimd<T> x;
-	asm volatile("simd_memory_begin%=:" :);
-	x.load(std::begin(in_arr), std::end(in_arr), [](T x) {return x;});
-	asm volatile("simd_memory_end%=:" :);
-
-	x += 2.0;
-
-	T out_arr[N];
-	x.store(std::begin(out_arr), std::end(out_arr), [](T &x, T y) {x = y;});
-
-	REQUIRE_ALL_LTE(1, (out_arr[0] - (2.0 + in_arr[0])), tol);
-
-	// Make sure the default AoS->SoA load value is working
-	if (N > 4) {
-		REQUIRE_ALL(2, out_arr[5] != 2.0);
-	}
-
-	x.load(in_arr);
-	x += 2.0;
-	x.store(out_arr);
-	REQUIRE_ALL_LTE(3, (out_arr[0] - (2.0 + in_arr[0])), tol);
-
-	x.load(in_arr);
-	auto mask = x <= 2.0;
-	if(any(mask)) {
-		auto a = x + 2.0;
-		x.blend(a, mask);
-	}
-	x.store(out_arr);
-
-	switch (N) {
-	case 8:
-		REQUIRE_ALL_LTE(7.8, (out_arr[7] - in_arr[7]), tol)
-		REQUIRE_ALL_LTE(7.7, (out_arr[6] - in_arr[6]), tol)
-		REQUIRE_ALL_LTE(7.6, (out_arr[5] - in_arr[5]), tol)
-		REQUIRE_ALL_LTE(7.5, (out_arr[4] - in_arr[4]), tol)
-		/* fall-thru */
-		/* no break */
-	case 4:
-		REQUIRE_ALL_LTE(7.4, (out_arr[3] - in_arr[3]), tol)
-		REQUIRE_ALL_LTE(7.3, (out_arr[2] - (2.0 + in_arr[2])), tol)
-		/* fall-thru */
-		/* no break */
-	case 2:
-		REQUIRE_ALL_LTE(7.2, (out_arr[1] - (2.0 + in_arr[1])), tol)
-		/* fall-thru */
-		/* no break */
-	case 1:
-		REQUIRE_ALL_LTE(7.1, (out_arr[0] - (2.0 + in_arr[0])), tol)
+		// These are split out so that analyzing the objdump is easier
+		REQUIRE(scimd::all(s));
+		REQUIRE(scimd::all(d));
+		REQUIRE(scimd::all(p));
+		REQUIRE(scimd::all(q));
+		REQUIRE(scimd::all(m));
+		REQUIRE(scimd::all(n));
+		REQUIRE(scimd::all(o));
 	}
 }
 
 template<typename T>
 void test_mixed_mode() {
-	T x = 3.0;
-	T y = 17.0;
-	T sum = x + y;
-	T diff = x - y;
-	T prod = x * y;
-	T quot = x / y;
-	T srty = std::sqrt(y);
-	T rsrt = x / std::sqrt(y);
-	T prsqrt = 1.0 / std::sqrt(y);
-	const T tol = fp_tol<T>::value;
+	T const x = 3.0;
+	T const y = 17.0;
+	T const sum = x + y;
+	T const diff = x - y;
+	T const prod = x * y;
+	T const quot = x / y;
+	T const srty = std::sqrt(y);
+	T const rsrt = x / std::sqrt(y);
+	T const prsqrt = 1.0 / std::sqrt(y);
+	T const tol = fp_tol<T>::value;
 
 	std::string const fpname{fp_name<T>::value};
 	auto name = "scimd::cksimd<" + fpname + ">+scimd::cksimd<" + fpname + ">";
@@ -120,62 +144,59 @@ void test_mixed_mode() {
 
 template <typename T>
 void test_operators() {
-	SECTION("Testing operators for T = " + std::string{fp_name<T>::value});
-
 	constexpr auto tol = fp_tol<T>::value;
-	constexpr T x = 0.1, y = 0.2;
-	REQUIRE_ALL_LTE(0, (-scimd::cksimd<T>{x} - scimd::cksimd<T>{-x}), tol);
-	REQUIRE_ALL_LTE(1, (scimd::cksimd<T>{x + y} - (scimd::cksimd<T>{x} + scimd::cksimd<T>{y})), tol);
-	REQUIRE_ALL_LTE(2, (scimd::cksimd<T>{x - y} - (scimd::cksimd<T>{x} - scimd::cksimd<T>{y})), tol);
-	REQUIRE_ALL_LTE(3, (scimd::cksimd<T>{x * y} - (scimd::cksimd<T>{x} * scimd::cksimd<T>{y})), tol);
-	REQUIRE_ALL_LTE(4, (scimd::cksimd<T>{x / y} - (scimd::cksimd<T>{x} / scimd::cksimd<T>{y})), tol);
+	scimd::cksimd<T> const x{0.1}, y{0.2};
 
-	REQUIRE_ALL_LTE(5, ((scimd::cksimd<T>{y} += x) - scimd::cksimd<T>{y + x}), tol);
-	REQUIRE_ALL_LTE(6, ((scimd::cksimd<T>{y} -= x) - scimd::cksimd<T>{y - x}), tol);
-	REQUIRE_ALL_LTE(7, ((scimd::cksimd<T>{y} *= x) - scimd::cksimd<T>{y * x}), tol);
-	REQUIRE_ALL_LTE(8, ((scimd::cksimd<T>{y} /= x) - scimd::cksimd<T>{y / x}), tol);
+	SECTION("arithmetic operators for T = " + std::string{fp_name<T>::value}) {
+		REQUIRE(scimd::all((-x - (-x)) <= tol));
+		REQUIRE(scimd::all(((x + T{}) - x) <= tol));
+		REQUIRE(scimd::all(((x + y) - (x) - (y)) <= tol));
+		REQUIRE(scimd::all(((x - y) - (x) + (y)) <= tol));
+		REQUIRE(scimd::all(((x * y) - (x * y)) <= tol));
+		REQUIRE(scimd::all(((x / y) - (x / y)) <= tol));
+	}
 
-	REQUIRE_ALL_LTE( 9, scimd::cksimd<T>{x}, scimd::cksimd<T>{y});
-	REQUIRE_ALL_LT (10, scimd::cksimd<T>{x}, scimd::cksimd<T>{y});
-	REQUIRE_ALL_GT (11, scimd::cksimd<T>{y}, scimd::cksimd<T>{x});
-	REQUIRE_ALL_GTE(12, scimd::cksimd<T>{y}, scimd::cksimd<T>{x});
+	SECTION("in-place arithmetic operators for T = " + std::string{fp_name<T>::value}) {
+		REQUIRE(scimd::all(((scimd::cksimd<T>{y} += x) - (y + x)) <= tol));
+		REQUIRE(scimd::all(((scimd::cksimd<T>{y} -= x) - (y - x)) <= tol));
+		REQUIRE(scimd::all(((scimd::cksimd<T>{y} *= x) - (y * x)) <= tol));
+		REQUIRE(scimd::all(((scimd::cksimd<T>{y} /= x) - (y / x)) <= tol));
+	}
 
-	REQUIRE_ALL_LT (13, (scimd::cksimd<T>{x} - scimd::cksimd<T>{y}), tol);
-	REQUIRE_ALL_LTE(14, (scimd::cksimd<T>{y} - scimd::cksimd<T>{y}), tol);
-	REQUIRE_ALL_GT (15, (scimd::cksimd<T>{y} + scimd::cksimd<T>{x}), tol);
-	REQUIRE_ALL_GTE(16, (scimd::cksimd<T>{y} + scimd::cksimd<T>{x}), tol);
+	SECTION("logical operators for T = " + std::string{fp_name<T>::value}) {
+		REQUIRE(scimd::all(y > x));
+		REQUIRE(scimd::none(y < x));
+		REQUIRE(scimd::any(y >= x));
+		REQUIRE(!scimd::any(y <= x));
+	}
 
-	REQUIRE_NONE_GT (17, tol, (scimd::cksimd<T>{y} + scimd::cksimd<T>{x}));
-	REQUIRE_NONE_GTE(18, tol, (scimd::cksimd<T>{y} + scimd::cksimd<T>{x}));
-	REQUIRE_NONE_LT (19, tol,  (scimd::cksimd<T>{y} - scimd::cksimd<T>{y}));
-	REQUIRE_NONE_LTE(20, tol, (scimd::cksimd<T>{y} - scimd::cksimd<T>{y}));
+	SECTION("vector+scalar logical operators for T = " + std::string{fp_name<T>::value}) {
+		REQUIRE(scimd::all(y > T{0.0}));
+		REQUIRE(scimd::none(y < T{0.0}));
+		REQUIRE(scimd::any(y >= T{0.0}));
+		REQUIRE(!scimd::any(y <= T{0.0}));
+	}
 
-	REQUIRE_ALL_LTE(21, (max(scimd::cksimd<T>{x}, scimd::cksimd<T>{y}) - scimd::cksimd<T>{y}), tol);
-	REQUIRE_ALL_LTE(22, (min(scimd::cksimd<T>{x}, scimd::cksimd<T>{y}) - scimd::cksimd<T>{x}), tol);
+	SECTION("range operators for T = " + std::string{fp_name<T>::value}) {
+		REQUIRE(scimd::all((scimd::max(x, y) - y) <= tol));
+		REQUIRE(scimd::all((scimd::min(x, y) - x) <= tol));
+	}
 
-	REQUIRE_ALL(23, ((x < y) && (y > x)));
-	REQUIRE_ALL(24, ((x < y) || (y < x)));
-	REQUIRE_ALL(25, ((x < y)  ^ (y < x)));
-	REQUIRE_ALL(26, (!(y < x)));
-
-	REQUIRE_NONE(27, ((x > y) && (y < x)));
-	REQUIRE_NONE(28, ((x > y) || (y < x)));
-	REQUIRE_NONE(29, ((x > y)  ^ (y < x)));
-	REQUIRE_NONE(30, (!(y > x)));
 }
-int main() {
-	// Don't let the size get bigger than the underlying SIMD type
-	static_assert(sizeof(scimd::cksimd<float>::simd_t) == sizeof(scimd::cksimd<float>), "scimd::cksimd<float> must be the size of scimd::cksimd<float>::simd_t");
-	static_assert(sizeof(scimd::cksimd<double>::simd_t) == sizeof(scimd::cksimd<double>), "scimd::cksimd<double> must be the size of scimd::cksimd<double>::simd_t");
 
-	show_simd_arch();
+// Don't let the size get bigger than the underlying SIMD type
+static_assert(sizeof(scimd::cksimd<float>::simd_t) == sizeof(scimd::cksimd<float>), "scimd::cksimd<float> must be the size of scimd::cksimd<float>::simd_t");
+static_assert(sizeof(scimd::cksimd<double>::simd_t) == sizeof(scimd::cksimd<double>), "scimd::cksimd<double> must be the size of scimd::cksimd<double>::simd_t");
 
+TEST_CASE("operators") {
 	test_operators<float>();
 	test_operators<double>();
+}
+TEST_CASE("mixed mode") {
 	test_mixed_mode<float>();
 	test_mixed_mode<double>();
+}
+TEST_CASE("memory") {
 	test_memory<float>();
 	test_memory<double>();
-
-	std::cout << "PASSED\n";
 }

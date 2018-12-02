@@ -1,51 +1,55 @@
-STD		 = -std=c++11
-CXXFLAGS = -Wall -Wextra -Werror -Wsign-compare -Wsign-conversion -Wnarrowing
-OPT    	 = -O3
-ARCH	 = -m64 -mfpmath=sse
+cxx_std   := -std=c++11
+cxx_flags := -Wall -Wextra -Wsign-compare -Wsign-conversion -Wnarrowing $($(cxx_flags))
+opt       := -O3
+arch      := -m64 -mfpmath=sse
+
+quiet := $(if $(filter $(VERBOSE),1),,@)
+
+target := test
 
 .PHONY: all clean
-.DEFAULT_GOAL = all
+.DEFAULT_GOAL = $(target)
 
-SRCS := test.cpp
-OBJS := $(patsubst %.cpp, %.o, $(SRCS))
-EXEC := test
+fma: arch += -mfma
+fma: $(target)
 
-fma: ARCH += -mfma
-fma: all
+sse: arch += -msse4.2
+sse: $(target)
 
-sse: ARCH += -msse4.2
-sse: all
+avx: arch += -mavx
+avx: $(target)
 
-avx: ARCH += -mavx
-avx: all
+avx512: arch += $(if $(findstring icc, $(CXX)), -xMIC-AVX512, -march=knl)
+avx512: $(target)
 
-avx512: ARCH += $(if $(findstring icc, $(CXX)), -xMIC-AVX512, -march=knl)
-avx512: all
+scalar: defines := -DSCIMD_DISABLE_AVX -DSCIMD_DISABLE_SSE -DSCIMD_DISABLE_AVX512 $(CPPFLAGS)
+scalar: arch += -march=x86-64
+scalar: $(target)
 
-scalar: ARCH += -DSCIMD_DISABLE_AVX -DSCIMD_DISABLE_SSE -DSCIMD_DISABLE_AVX512
-scalar: all
+# Force a rebuild if the compiler flags have changed
+.PHONY: force
+settings: force
+	$(quiet) flags="$(cxx_std) $(cxx_flags) $(opt) $(arch) $(defines)" && \
+		echo "$$flags" | cmp -s - $@ || echo "$$flags" > $@
 
-debug: SANITIZER	:= address
-debug: LDFLAGS		:= -fuse-ld=gold
-debug: OPT 	   := -O0 -g -fno-omit-frame-pointer -fsanitize=$(SANITIZER)
-debug: LNFLAGS := -fsanitize=$(SANITIZER)
-debug: all
+all: $(target)
 
-all: $(EXEC)
+# The driver doesn't need to know about the architecture used
+# This ensures it's not rebuilt on arch changes
+driver_$(CXX).o : driver.cpp Makefile
+	$(quiet) $(CXX) $(cxx_std) -I.. $(defines) $(cxx_flags) $(opt) -c -o $@ $<
 
-%.o : %.cpp Makefile
-	@ $(CXX) $(STD) -I.. $(CXXFLAGS) $(OPT) $(ARCH) $(OMP) -c -o $@ $<
+%.o : %.cpp Makefile settings
+	$(quiet) $(CXX) $(cxx_std) -I.. $(defines) $(cxx_flags) $(opt) $(arch) -c -o $@ $<
 
-$(EXEC) : $(OBJS)
-	@ $(CXX) -o $@ $< $(LNFLAGS) $(OMP) $(LDFLAGS)
-
-.PHONY: example
-example:
-	$(CXX) $(CXXFLAGS) $(STD) $(ARCH) $(OPT) -c -o example.o example.cpp
-	objdump -D -M intel example.o | c++filt > example.asm
+$(target) : test.o driver_$(CXX).o
+	$(quiet) $(CXX) -o $@ $^
 
 clean:
-	@ rm -f $(OBJS) $(EXEC)
+	$(quiet) rm -f test.o $(target)
+
+dist-clean: clean
+	$(quiet) rm -f driver*.o
 
 dump:
-	@ objdump -D -j .text -M intel $(EXEC) | c++filt > $(EXEC).asm
+	$(quiet) objdump -D -j .text -M intel $(target) | c++filt > $(target).asm

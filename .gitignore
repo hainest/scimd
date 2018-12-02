@@ -7,3 +7,4 @@ stuff.pl
 *.asm
 SSEdefs.h
 *.xml
+tests/settings

@@ -5,13 +5,13 @@ sub execute($) {
 	my $cmd = shift;
 	system($cmd);
 	die "\n\nError executing \n\t'$cmd'\n\n" if ( ( $? >> 8 ) != 0 || $? == -1 || ( $? & 127 ) != 0 );
+	return 1;
 }
 
 my @compilers = (@ARGV) ? @ARGV : (
-	'g++-4.8', 'g++-4.9', 'g++-5', 'g++-6',
-	'g++-7', 'g++-8',
-	'clang++-3.7', 'clang++-3.8', 'clang++-3.9',
-	'clang++-4.0', 'clang++-6.0');
+	'g++-4.8', 'g++-4.9', 'g++-5', 'g++-6', 'g++-7', 'g++-8',
+	'clang++-3.7', 'clang++-3.8', 'clang++-3.9', 'clang++-4.0', 'clang++-6.0'
+	);
 
 my @architectures = ('sse', 'avx', 'fma', 'scalar');
 
@@ -19,6 +19,6 @@ for my $c (@compilers) {
 	for my $arch (@architectures) {
 		print "$c, $arch : ";
 		execute("make CXX=$c clean $arch");
-		execute("./test");
+		execute("./test 2>&1 >/dev/null") and print "PASSED\n";
 	}
 }
