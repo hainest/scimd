@@ -138,10 +138,10 @@ namespace scimd {
 		return *p;
 	}
 	static inline float blend(float x, float y, bool mask, scalar_float_tag) {
-		return (mask) ? x : y;
+		return (mask) ? y : x;
 	}
 	static inline double blend(double x, double y, bool mask, scalar_double_tag) {
-		return (mask) ? x : y;
+		return (mask) ? y : x;
 	}
 	/*************************************************************************/
 	static inline float sqrt(float x, scalar_float_tag) {
