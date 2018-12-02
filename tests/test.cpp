@@ -20,19 +20,19 @@ template <> struct fp_name<double> { static constexpr char const* value = "doubl
 template <typename T>
 void test_memory() {
 	constexpr auto tol = fp_tol<T>::value;
-	constexpr auto N = scimd::cksimd<T>::size;
+	constexpr auto N = scimd::pack<T>::size;
 	std::array<T, N> input;
 	std::iota(std::begin(input), std::end(input), 0.0f);
 
 	SECTION("load/store for T = " + std::string{fp_name<T>::value}) {
 		// use simple load of N values
-		scimd::cksimd<T> x;
+		scimd::pack<T> x;
 		asm volatile("scimd_load_begin%=:" :);
 		x.load(input.data());
 		asm volatile("scimd_load_end%=:" :);
 
 		// use lambda load of N values (no default used here)
-		scimd::cksimd<T> y;
+		scimd::pack<T> y;
 		asm volatile("scimd_load_lambda_begin%=:" :);
 		y.load(std::begin(input), std::end(input), [](T x) {return x;});
 		asm volatile("scimd_load_lambda_end%=:" :);
@@ -60,7 +60,7 @@ void test_memory() {
 	SECTION("load/store with default for T = " + std::string{fp_name<T>::value}) {
 		// use lambda load of 1 value and fill the rest of the SIMD vector
 		// with the default value
-		scimd::cksimd<T> x;
+		scimd::pack<T> x;
 		asm volatile("scimd_load_lambda_def_begin%=:" :);
 		x.load(std::end(input)-1, std::end(input), [](T x) {return x;});
 		asm volatile("scimd_load_lambda_def_end%=:" :);
@@ -132,12 +132,12 @@ void test_mixed_mode() {
 	T const tol = fp_tol<T>::value;
 
 	std::string const fpname{fp_name<T>::value};
-	auto name = "scimd::cksimd<" + fpname + ">+scimd::cksimd<" + fpname + ">";
-	test_mixed_mode(scimd::cksimd<T> { x }, scimd::cksimd<T> { y }, name, answer<scimd::cksimd<T>, scimd::cksimd<T>> { sum, diff, prod, quot, srty, rsrt, prsqrt }, tol);
-	name = "scimd::cksimd<" + fpname + ">+" + fpname;
-	test_mixed_mode(scimd::cksimd<T> { x }, y, name, answer<scimd::cksimd<T>, T> { sum, diff, prod, quot, srty, rsrt, prsqrt }, tol);
-	name = fpname + "+scimd::cksimd<" + fpname + ">";
-	test_mixed_mode(x, scimd::cksimd<T> { y }, name, answer<T, scimd::cksimd<T>> { sum, diff, prod, quot, srty, rsrt, prsqrt }, tol);
+	auto name = "scimd::pack<" + fpname + ">+scimd::pack<" + fpname + ">";
+	test_mixed_mode(scimd::pack<T> { x }, scimd::pack<T> { y }, name, answer<scimd::pack<T>, scimd::pack<T>> { sum, diff, prod, quot, srty, rsrt, prsqrt }, tol);
+	name = "scimd::pack<" + fpname + ">+" + fpname;
+	test_mixed_mode(scimd::pack<T> { x }, y, name, answer<scimd::pack<T>, T> { sum, diff, prod, quot, srty, rsrt, prsqrt }, tol);
+	name = fpname + "+scimd::pack<" + fpname + ">";
+	test_mixed_mode(x, scimd::pack<T> { y }, name, answer<T, scimd::pack<T>> { sum, diff, prod, quot, srty, rsrt, prsqrt }, tol);
 	name = fpname + "+" + fpname;
 	test_mixed_mode(x, y, name, answer<T, T> { sum, diff, prod, quot, srty, rsrt, prsqrt }, tol);
 }
@@ -145,7 +145,7 @@ void test_mixed_mode() {
 template <typename T>
 void test_operators() {
 	constexpr auto tol = fp_tol<T>::value;
-	scimd::cksimd<T> const x{0.1}, y{0.2};
+	scimd::pack<T> const x{0.1}, y{0.2};
 
 	SECTION("arithmetic operators for T = " + std::string{fp_name<T>::value}) {
 		REQUIRE(scimd::all((-x - (-x)) <= tol));
@@ -157,10 +157,10 @@ void test_operators() {
 	}
 
 	SECTION("in-place arithmetic operators for T = " + std::string{fp_name<T>::value}) {
-		REQUIRE(scimd::all(((scimd::cksimd<T>{y} += x) - (y + x)) <= tol));
-		REQUIRE(scimd::all(((scimd::cksimd<T>{y} -= x) - (y - x)) <= tol));
-		REQUIRE(scimd::all(((scimd::cksimd<T>{y} *= x) - (y * x)) <= tol));
-		REQUIRE(scimd::all(((scimd::cksimd<T>{y} /= x) - (y / x)) <= tol));
+		REQUIRE(scimd::all(((scimd::pack<T>{y} += x) - (y + x)) <= tol));
+		REQUIRE(scimd::all(((scimd::pack<T>{y} -= x) - (y - x)) <= tol));
+		REQUIRE(scimd::all(((scimd::pack<T>{y} *= x) - (y * x)) <= tol));
+		REQUIRE(scimd::all(((scimd::pack<T>{y} /= x) - (y / x)) <= tol));
 	}
 
 	SECTION("logical operators for T = " + std::string{fp_name<T>::value}) {
@@ -185,8 +185,8 @@ void test_operators() {
 }
 
 // Don't let the size get bigger than the underlying SIMD type
-static_assert(sizeof(scimd::cksimd<float>::simd_t) == sizeof(scimd::cksimd<float>), "scimd::cksimd<float> must be the size of scimd::cksimd<float>::simd_t");
-static_assert(sizeof(scimd::cksimd<double>::simd_t) == sizeof(scimd::cksimd<double>), "scimd::cksimd<double> must be the size of scimd::cksimd<double>::simd_t");
+static_assert(sizeof(scimd::pack<float>::simd_t) == sizeof(scimd::pack<float>), "scimd::pack<float> must be the size of scimd::pack<float>::simd_t");
+static_assert(sizeof(scimd::pack<double>::simd_t) == sizeof(scimd::pack<double>), "scimd::pack<double> must be the size of scimd::pack<double>::simd_t");
 
 TEST_CASE("operators") {
 	test_operators<float>();
