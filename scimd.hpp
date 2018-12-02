@@ -25,136 +25,143 @@ namespace scimd {
 		T value;
 		explicit sqrt_proxy(T x) : value{x} {}
 		operator T() {
-			return scimd::sqrt(value.val, typename T::category());
+			return sqrt(value.val, typename T::category());
 		}
 	};
 
+	template <typename T>
+	struct conditional_t {
+		typename T::bool_t val;
+		conditional_t(typename T::bool_t val) : val(val) {}
+
+		conditional_t operator &&(conditional_t x) const { return logical_and (val, x.val, typename T::category()); }
+		conditional_t operator ||(conditional_t x) const { return logical_or  (val, x.val, typename T::category()); }
+		conditional_t operator  ^(conditional_t x) const { return logical_xor (val, x.val, typename T::category()); }
+		conditional_t operator  !() 			   const { return logical_not (val, typename T::category()); }
+	};
+
+	template <typename T>
+	bool all(conditional_t<T> x) { return logical_all(x.val, typename T::category()); }
+	template <typename T>
+	bool none(conditional_t<T> x) { return logical_none(x.val, typename T::category()); }
+	template <typename T>
+	bool any(conditional_t<T> x) { return !none(x); }
+
+	bool all(bool x) { return x; }
+	bool none(bool x) { return !x; }
+	bool any(bool x) { return !none(x); }
+
+	template <typename T>
+	struct cksimd {
+		using value_type = T;
+		using category = typename simd_category<value_type>::type;
+		using simd_t = typename simd_type<value_type>::type;
+		static constexpr auto size = sizeof(simd_t) / sizeof(value_type);
+		using bool_t = typename bool_type<value_type>::type;
+
+		simd_t val;
+
+		cksimd() 		 : val(zero(category())) {}
+		cksimd(simd_t x) : val(x) {}
+
+		template <typename U, typename =
+				typename std::enable_if<
+					  std::is_floating_point<U>::value &&
+					 !detail::is_scalar<category>::value, U>::type>
+		cksimd(U x) : val(set1(x, category())) {}
+
+		cksimd operator -()			const { return neg(val,        category()); }
+		cksimd operator +(cksimd x) const { return add(val, x.val, category()); }
+		cksimd operator -(cksimd x) const { return sub(val, x.val, category()); }
+		cksimd operator *(cksimd x) const { return mul(val, x.val, category()); }
+		cksimd operator /(cksimd x) const { return div(val, x.val, category()); }
+
+		cksimd operator +=(cksimd x) { val = add(val, x.val, category()); return *this; }
+		cksimd operator -=(cksimd x) { val = sub(val, x.val, category()); return *this; }
+		cksimd operator *=(cksimd x) { val = mul(val, x.val, category()); return *this; }
+		cksimd operator /=(cksimd x) { val = div(val, x.val, category()); return *this; }
+
+		friend cksimd operator +(value_type x, cksimd b) { return cksimd(x) + b; }
+		friend cksimd operator -(value_type x, cksimd b) { return cksimd(x) - b; }
+		friend cksimd operator *(value_type x, cksimd b) { return cksimd(x) * b; }
+
+		// See the respective definitions of rsqrt for the relative errors.
+		friend cksimd rsqrt(cksimd x) { return rsqrt(x.val, category()); }
+
+		/*
+		 * 	This allows code like `T x(4.0), y(2.0/sqrt(x));` to work correctly for
+		 * 	all types and uses the rsqrt optimization for T=cksimd.
+		 *
+		 * 	If you just need 1.0 / sqrt(x), use rsqrt directly to avoid the extra mul.
+		 */
+		friend cksimd operator/(cksimd lhs, sqrt_proxy<cksimd> rhs) {
+			return lhs * rsqrt(rhs.value);
+		}
+
+		// The TMP here is is just to disambiguate this from operator/ with a sqrt_proxy<cksimd<U>>
+		template <typename U>
+		friend typename std::enable_if<std::is_floating_point<U>::value, cksimd<U>>::type
+		operator /(value_type a, cksimd<U> b) { return cksimd<U>(a) / b; }
+
+		conditional_t<cksimd> operator < (cksimd x) const { return less	   (val, x.val, category()); }
+		conditional_t<cksimd> operator > (cksimd x) const { return greater    (val, x.val, category()); }
+		conditional_t<cksimd> operator <=(cksimd x) const { return less_eq    (val, x.val, category()); }
+		conditional_t<cksimd> operator >=(cksimd x) const { return greater_eq (val, x.val, category()); }
+
+		friend conditional_t<cksimd> operator < (value_type x, cksimd y) { return cksimd{x}  < y; }
+		friend conditional_t<cksimd> operator > (value_type x, cksimd y) { return cksimd{x}  > y; }
+		friend conditional_t<cksimd> operator <=(value_type x, cksimd y) { return cksimd{x} <= y; }
+		friend conditional_t<cksimd> operator >=(value_type x, cksimd y) { return cksimd{x} >= y; }
+
+		value_type      * store(value_type      * p) { ::scimd::store(p, val, category()); return p; }
+		value_type const* load (value_type const* p) { val = ::scimd::load(p, category()); return p; }
+
+		cksimd blend(cksimd x, conditional_t<cksimd> mask) { val = ::scimd::blend(val, x.val, mask.val, category()); return *this; }
+
+		template <typename FwdIter, typename UnaryFunc>
+		FwdIter load(FwdIter beg, FwdIter end, UnaryFunc f, value_type default_val = value_type{}) {
+			value_type arr[size];
+			size_t i = 0;
+			for(; i < size && beg != end; i++) {
+				arr[i] = f(*beg);
+				++beg;
+			}
+			for(; i < size; i++) {
+				arr[i] = default_val;
+			}
+			val = ::scimd::load(arr, category{});
+			return beg;
+		}
+
+		template <typename FwdIter, typename BinaryFunc>
+		typename std::enable_if<detail::is_scalar<category>::value, FwdIter>::type
+		store(FwdIter beg, FwdIter end, BinaryFunc f) {
+			f(*beg, val);
+			++beg;
+			(void)end;
+			return beg;
+		}
+
+		template <typename FwdIter, typename BinaryFunc>
+		typename std::enable_if<!detail::is_scalar<category>::value, FwdIter>::type
+		store(FwdIter beg, FwdIter end, BinaryFunc f) {
+			for(size_t i = 0; i < size && beg != end; i++) {
+				f(*beg, val[i]);
+				++beg;
+			}
+			return beg;
+		}
+	};
+
+	template <typename T>
+	cksimd<T> max(cksimd<T> x, cksimd<T> b) {
+		return ::scimd::max(x.val, b.val, typename cksimd<T>::category());
+	}
+	template <typename T>
+	cksimd<T> min(cksimd<T> x, cksimd<T> b) {
+		return ::scimd::min(x.val, b.val, typename cksimd<T>::category());
+	}
 }
-
-template <typename T>
-struct conditional_t {
-	typename T::bool_t val;
-	conditional_t(typename T::bool_t val) : val(val) {}
-
-	conditional_t operator &&(conditional_t x) const { return scimd::logical_and (val, x.val, typename T::category()); }
-	conditional_t operator ||(conditional_t x) const { return scimd::logical_or  (val, x.val, typename T::category()); }
-	conditional_t operator  ^(conditional_t x) const { return scimd::logical_xor (val, x.val, typename T::category()); }
-	conditional_t operator  !() 			   const { return scimd::logical_not (val, typename T::category()); }
-
-	friend bool all(conditional_t x) { return scimd::logical_all(x.val, typename T::category()); }
-	friend bool none(conditional_t x) { return scimd::logical_none(x.val, typename T::category()); }
-	friend bool any(conditional_t x) { return !none(x); }
-};
-
-bool all(bool x) { return x; }
-bool none(bool x) { return !x; }
-bool any(bool x) { return !none(x); }
-
-template <typename T>
-struct cksimd {
-	using value_type = T;
-	using category = typename scimd::simd_category<value_type>::type;
-	using simd_t = typename scimd::simd_type<value_type>::type;
-	static constexpr auto size = sizeof(simd_t) / sizeof(value_type);
-	using bool_t = typename scimd::bool_type<value_type>::type;
-
-	simd_t val;
-
-	cksimd() 		 : val(scimd::zero(category())) {}
-	cksimd(simd_t x) : val(x) {}
-
-	template <typename U, typename =
-			typename std::enable_if<
-				  std::is_floating_point<U>::value &&
-				 !scimd::detail::is_scalar<category>::value, U>::type>
-	cksimd(U x) : val(scimd::set1(x, category())) {}
-
-	cksimd operator -()			const { return scimd::neg(val, 		category()); }
-	cksimd operator +(cksimd x) const { return scimd::add(val, x.val, category()); }
-	cksimd operator -(cksimd x) const { return scimd::sub(val, x.val, category()); }
-	cksimd operator *(cksimd x) const { return scimd::mul(val, x.val, category()); }
-	cksimd operator /(cksimd x) const { return scimd::div(val, x.val, category()); }
-
-	cksimd operator +=(cksimd x) { val = scimd::add(val, x.val, category()); return *this; }
-	cksimd operator -=(cksimd x) { val = scimd::sub(val, x.val, category()); return *this; }
-	cksimd operator *=(cksimd x) { val = scimd::mul(val, x.val, category()); return *this; }
-	cksimd operator /=(cksimd x) { val = scimd::div(val, x.val, category()); return *this; }
-
-	friend cksimd operator +(value_type x, cksimd b) { return cksimd(x) + b; }
-	friend cksimd operator -(value_type x, cksimd b) { return cksimd(x) - b; }
-	friend cksimd operator *(value_type x, cksimd b) { return cksimd(x) * b; }
-
-	// See the respective definitions of scimd::rsqrt for the relative errors.
-	friend cksimd rsqrt(cksimd x) { return scimd::rsqrt(x.val, category()); }
-
-	/*
-	 * 	This allows code like `T x(4.0), y(2.0/sqrt(x));` to work correctly for
-	 * 	all types and uses the rsqrt optimization for T=cksimd.
-	 *
-	 * 	If you just need 1.0 / sqrt(x), use rsqrt directly to avoid the extra mul.
-	 */
-	friend cksimd operator/(cksimd lhs, scimd::sqrt_proxy<cksimd> rhs) {
-		return lhs * rsqrt(rhs.value);
-	}
-
-	// The TMP here is is just to disambiguate this from operator/ with a sqrt_proxy<cksimd<U>>
-	template <typename U>
-	friend typename std::enable_if<std::is_floating_point<U>::value, cksimd<U>>::type
-	operator /(value_type a, cksimd<U> b) { return cksimd<U>(a) / b; }
-
-	conditional_t<cksimd> operator < (cksimd x) const { return scimd::less	   (val, x.val, category()); }
-	conditional_t<cksimd> operator > (cksimd x) const { return scimd::greater    (val, x.val, category()); }
-	conditional_t<cksimd> operator <=(cksimd x) const { return scimd::less_eq    (val, x.val, category()); }
-	conditional_t<cksimd> operator >=(cksimd x) const { return scimd::greater_eq (val, x.val, category()); }
-
-	friend conditional_t<cksimd> operator < (value_type x, cksimd y) { return cksimd{x}  < y; }
-	friend conditional_t<cksimd> operator > (value_type x, cksimd y) { return cksimd{x}  > y; }
-	friend conditional_t<cksimd> operator <=(value_type x, cksimd y) { return cksimd{x} <= y; }
-	friend conditional_t<cksimd> operator >=(value_type x, cksimd y) { return cksimd{x} >= y; }
-
-	friend cksimd max (cksimd x, cksimd b) { return scimd::max(x.val, b.val, category()); }
-	friend cksimd min (cksimd x, cksimd b) { return scimd::min(x.val, b.val, category()); }
-
-	value_type      * store(value_type      * p) { scimd::store(p, val, category()); return p; }
-	value_type const* load (value_type const* p) { val = scimd::load(p, category()); return p; }
-
-	cksimd blend(cksimd x, conditional_t<cksimd> mask) { val = scimd::blend(val, x.val, mask.val, category()); return *this; }
-
-	template <typename FwdIter, typename UnaryFunc>
-	FwdIter load(FwdIter beg, FwdIter end, UnaryFunc f, value_type default_val = value_type{}) {
-		value_type arr[size];
-		size_t i = 0;
-		for(; i < size && beg != end; i++) {
-			arr[i] = f(*beg);
-			++beg;
-		}
-		for(; i < size; i++) {
-			arr[i] = default_val;
-		}
-		val = scimd::load(arr, category());
-		return beg;
-	}
-
-	template <typename FwdIter, typename BinaryFunc>
-	typename std::enable_if<scimd::detail::is_scalar<category>::value, FwdIter>::type
-	store(FwdIter beg, FwdIter end, BinaryFunc f) {
-		f(*beg, val);
-		++beg;
-		(void)end;
-		return beg;
-	}
-
-	template <typename FwdIter, typename BinaryFunc>
-	typename std::enable_if<!scimd::detail::is_scalar<category>::value, FwdIter>::type
-	store(FwdIter beg, FwdIter end, BinaryFunc f) {
-		for(size_t i = 0; i < size && beg != end; i++) {
-			f(*beg, val[i]);
-			++beg;
-		}
-		return beg;
-	}
-
-};
 
 /**
  * 	The converting constructor for cksimd<T> enables this overload in dangerous
@@ -170,17 +177,16 @@ namespace {
 	template <typename T>
 	inline typename std::enable_if<
 						std::is_floating_point<T>::value,
-						scimd::sqrt_proxy<cksimd<T>>
+						scimd::sqrt_proxy<scimd::cksimd<T>>
 					>::type
-	sqrt(cksimd<T> a) {
-		return scimd::sqrt_proxy<cksimd<T>>(a);
+	sqrt(scimd::cksimd<T> a) {
+		return scimd::sqrt_proxy<scimd::cksimd<T>>(a);
 	}
 
 	template <typename T>
 	inline typename std::enable_if<
 						std::is_floating_point<T>::value,
-						cksimd<T>
+						scimd::cksimd<T>
 					>::type
-	rsqrt(T x) { return rsqrt(cksimd<T>{x}); }
+	rsqrt(T x) { return rsqrt(scimd::cksimd<T>{x}); }
 }
-
