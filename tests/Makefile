@@ -52,4 +52,4 @@ dist-clean: clean
 	$(quiet) rm -f driver*.o
 
 dump:
-	$(quiet) objdump -D -j .text -M intel $(target) | c++filt > $(target).asm
+	$(quiet) objdump -D -j .text -M intel $(target) | c++filt > $(target)_$(CXX).asm
