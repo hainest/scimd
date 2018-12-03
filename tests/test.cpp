@@ -7,6 +7,8 @@
 #include <array>
 #include <algorithm>
 
+using std::abs;
+
 // These will eventually be replaced by versions from the standard library
 bool all(bool x) { return x; }
 bool none(bool x) { return !x; }
@@ -92,7 +94,7 @@ void test_memory() {
 		asm volatile("scimd_load_lambda_end%=:" :);
 
 		// x and y should be equal to within FP tolerance
-		REQUIRE(all((x-y) <= tol));
+		REQUIRE(all(abs(x-y) <= tol));
 
 		alignas(scimd::pack<T>) std::array<T,N> out_lambda;
 		x.store(std::begin(out_lambda), std::end(out_lambda), [](T &x, T y) {x = y;});
@@ -134,13 +136,13 @@ void test_mixed_mode(T x, U y, std::string const& name, answer<T, U> const& ans,
 		asm volatile("arith_begin%=:" :);
 		U srty = sqrt(y);
 		auto rsrt = x / sqrt(y);
-		auto s = (((x + y) - ans.sum) <= tol);
-		auto d = (((x - y) - ans.diff) <= tol);
-		auto p = (((x * y) - ans.prod) <= tol);
-		auto q = (((x / y) - ans.quot) <= tol);
-		auto m = (srty - ans.srty) <= tol;
-		auto n = (rsrt - ans.rsrt) <= tol;
-		auto o = (rsqrt(y) - ans.prsqrt) <= tol;
+		auto s = (abs((x + y) - ans.sum) <= tol);
+		auto d = (abs((x - y) - ans.diff) <= tol);
+		auto p = (abs((x * y) - ans.prod) <= tol);
+		auto q = (abs((x / y) - ans.quot) <= tol);
+		auto m = abs(srty - ans.srty) <= tol;
+		auto n = abs(rsrt - ans.rsrt) <= tol;
+		auto o = abs(rsqrt(y) - ans.prsqrt) <= tol;
 		asm volatile("arith_end%=:" :);
 
 		// These are split out so that analyzing the objdump is easier
@@ -184,19 +186,19 @@ void test_operators() {
 	scimd::pack<T> const x{0.1}, y{0.2};
 
 	SECTION("arithmetic operators for T = " + std::string{fp_name<T>::value}) {
-		REQUIRE(all((-x - (-x)) <= tol));
-		REQUIRE(all(((x + T{}) - x) <= tol));
-		REQUIRE(all(((x + y) - (x) - (y)) <= tol));
-		REQUIRE(all(((x - y) - (x) + (y)) <= tol));
-		REQUIRE(all(((x * y) - (x * y)) <= tol));
-		REQUIRE(all(((x / y) - (x / y)) <= tol));
+		REQUIRE(all(abs(-x - (-x)) <= tol));
+		REQUIRE(all(abs((x + T{}) - x) <= tol));
+		REQUIRE(all(abs((x + y) - (x) - (y)) <= tol));
+		REQUIRE(all(abs((x - y) - (x) + (y)) <= tol));
+		REQUIRE(all(abs((x * y) - (x * y)) <= tol));
+		REQUIRE(all(abs((x / y) - (x / y)) <= tol));
 	}
 
 	SECTION("in-place arithmetic operators for T = " + std::string{fp_name<T>::value}) {
-		REQUIRE(all(((scimd::pack<T>{y} += x) - (y + x)) <= tol));
-		REQUIRE(all(((scimd::pack<T>{y} -= x) - (y - x)) <= tol));
-		REQUIRE(all(((scimd::pack<T>{y} *= x) - (y * x)) <= tol));
-		REQUIRE(all(((scimd::pack<T>{y} /= x) - (y / x)) <= tol));
+		REQUIRE(all(abs((scimd::pack<T>{y} += x) - (y + x)) <= tol));
+		REQUIRE(all(abs((scimd::pack<T>{y} -= x) - (y - x)) <= tol));
+		REQUIRE(all(abs((scimd::pack<T>{y} *= x) - (y * x)) <= tol));
+		REQUIRE(all(abs((scimd::pack<T>{y} /= x) - (y / x)) <= tol));
 	}
 
 	SECTION("logical operators for T = " + std::string{fp_name<T>::value}) {
@@ -215,8 +217,8 @@ void test_operators() {
 
 	SECTION("range operators for T = " + std::string{fp_name<T>::value}) {
 		// These assume x and y are positive and y>x
-		REQUIRE(all((max(x, y) - y) <= tol));
-		REQUIRE(all((min(x, y) - x) <= tol));
+		REQUIRE(all(abs(max(x, y) - y) <= tol));
+		REQUIRE(all(abs(min(x, y) - x) <= tol));
 		REQUIRE(all(abs(x) >= x));
 		REQUIRE(all(abs(-x) >= x));
 	}
