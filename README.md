@@ -40,6 +40,8 @@ scimd is header-only. Just drop it into your project or include it as a git subm
 
 ## Testing
 
+scimd has been tested on gcc-4.8, gcc-4.9, gcc-5, gcc-6, gcc-7, gcc-8, clang-3.7, clang-3.8, clang-3.9, clang-4.0, and clang-6
+
 TODO
 
 ## Documentation
