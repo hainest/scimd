@@ -9,10 +9,8 @@ namespace scimd {
 	struct avx512_float_tag {};
 	struct avx512_double_tag {};
 
-	namespace detail {
-		template <> struct is_avx512<avx512_float_tag> : std::true_type {};
-		template <> struct is_avx512<avx512_double_tag> : std::true_type {};
-	}
+	template <> struct is_avx512<avx512_float_tag> : std::true_type {};
+	template <> struct is_avx512<avx512_double_tag> : std::true_type {};
 
 	template <> struct simd_category<float>  { using type = avx512_float_tag; };
 	template <> struct simd_category<double> { using type = avx512_double_tag; };

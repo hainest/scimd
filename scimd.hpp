@@ -51,7 +51,7 @@ namespace scimd {
 		template <typename U, typename =
 				typename std::enable_if<
 					  std::is_floating_point<U>::value &&
-					 !detail::is_scalar<category>::value, U>::type>
+					 !is_scalar<category>::value, U>::type>
 		pack(U x) : val(set1(x, category())) {}
 
 		pack operator -()			const { return neg(val,        category()); }
@@ -118,7 +118,7 @@ namespace scimd {
 		}
 
 		template <typename FwdIter, typename BinaryFunc>
-		typename std::enable_if<detail::is_scalar<category>::value, FwdIter>::type
+		typename std::enable_if<is_scalar<category>::value, FwdIter>::type
 		store(FwdIter beg, FwdIter end, BinaryFunc f) {
 			f(*beg, val);
 			++beg;
@@ -127,7 +127,7 @@ namespace scimd {
 		}
 
 		template <typename FwdIter, typename BinaryFunc>
-		typename std::enable_if<!detail::is_scalar<category>::value, FwdIter>::type
+		typename std::enable_if<!is_scalar<category>::value, FwdIter>::type
 		store(FwdIter beg, FwdIter end, BinaryFunc f) {
 			for(size_t i = 0; i < size && beg != end; i++) {
 				f(*beg, val[i]);
@@ -150,14 +150,14 @@ inline scimd::pack<T> min(scimd::pack<T> x, scimd::pack<T> b) {
 	return scimd::min(x.val, b.val, typename scimd::pack<T>::category());
 }
 template <typename T>
-typename std::enable_if<!scimd::detail::is_avx512<T>::value, scimd::pack<T>>::type
+typename std::enable_if<!scimd::is_avx512<T>::value, scimd::pack<T>>::type
 inline abs(scimd::pack<T> x) {
 	auto const mask = (x < static_cast<T>(0.0));
 	x.blend(-x, mask);
 	return x;
 }
 template <typename T>
-typename std::enable_if<scimd::detail::is_avx512<T>::value, scimd::pack<T>>::type
+typename std::enable_if<scimd::is_avx512<T>::value, scimd::pack<T>>::type
 inline abs(scimd::pack<T> x) {
 	return abs(x, typename scimd::pack<T>::category());
 }

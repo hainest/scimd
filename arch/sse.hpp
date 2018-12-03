@@ -9,6 +9,9 @@ namespace scimd {
 	struct sse_float_tag {};
 	struct sse_double_tag {};
 
+	template<> struct is_sse<sse_float_tag> : std::true_type {};
+	template<> struct is_sse<sse_double_tag> : std::true_type {};
+
 	template <> struct simd_category<float>  { using type = sse_float_tag; };
 	template <> struct simd_category<double> { using type = sse_double_tag; };
 

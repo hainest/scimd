@@ -10,12 +10,8 @@ namespace scimd {
 	struct scalar_float_tag {};
 	struct scalar_double_tag {};
 
-	namespace detail {
-		template <>
-		struct is_scalar<scalar_float_tag> : std::true_type{};
-		template <>
-		struct is_scalar<scalar_double_tag> : std::true_type{};
-	}
+	template <> struct is_scalar<scalar_float_tag> : std::true_type{};
+	template <> struct is_scalar<scalar_double_tag> : std::true_type{};
 
 	template <> struct simd_category<float>  { using type = scalar_float_tag; };
 	template <> struct simd_category<double> { using type = scalar_double_tag; };
