@@ -21,15 +21,6 @@
 namespace scimd {
 
 	template <typename T>
-	struct sqrt_proxy {
-		T value;
-		explicit sqrt_proxy(T x) : value{x} {}
-		operator T() {
-			return sqrt(value.val, typename T::value_type{}, typename T::category());
-		}
-	};
-
-	template <typename T>
 	struct conditional_t {
 		typename T::bool_t val;
 		conditional_t(typename T::bool_t val) : val(val) {}
@@ -65,37 +56,10 @@ namespace scimd {
 		pack operator *=(pack x) { val = mul(val, x.val, T{}, category()); return *this; }
 		pack operator /=(pack x) { val = div(val, x.val, T{}, category()); return *this; }
 
-		friend pack operator +(value_type x, pack b) { return pack(x) + b; }
-		friend pack operator -(value_type x, pack b) { return pack(x) - b; }
-		friend pack operator *(value_type x, pack b) { return pack(x) * b; }
-
-		// See the respective definitions of rsqrt for the relative errors.
-		friend pack rsqrt(pack x) { return rsqrt(x.val, T{}, category()); }
-
-		/*
-		 * 	This allows code like `T x(4.0), y(2.0/sqrt(x));` to work correctly for
-		 * 	all types and uses the rsqrt optimization for T=pack.
-		 *
-		 * 	If you just need 1.0 / sqrt(x), use rsqrt directly to avoid the extra mul.
-		 */
-		friend pack operator/(pack lhs, sqrt_proxy<pack> rhs) {
-			return lhs * rsqrt(rhs.value);
-		}
-
-		// The TMP here is is just to disambiguate this from operator/ with a sqrt_proxy<pack<U>>
-		template <typename U>
-		friend typename std::enable_if<std::is_floating_point<U>::value, pack<U>>::type
-		operator /(value_type a, pack<U> b) { return pack<U>(a) / b; }
-
 		conditional_t<pack> operator < (pack x) const { return less       (val, x.val, T{}, category()); }
 		conditional_t<pack> operator > (pack x) const { return greater    (val, x.val, T{}, category()); }
 		conditional_t<pack> operator <=(pack x) const { return less_eq    (val, x.val, T{}, category()); }
 		conditional_t<pack> operator >=(pack x) const { return greater_eq (val, x.val, T{}, category()); }
-
-		friend conditional_t<pack> operator < (value_type x, pack y) { return pack{x}  < y; }
-		friend conditional_t<pack> operator > (value_type x, pack y) { return pack{x}  > y; }
-		friend conditional_t<pack> operator <=(value_type x, pack y) { return pack{x} <= y; }
-		friend conditional_t<pack> operator >=(value_type x, pack y) { return pack{x} >= y; }
 
 		value_type      * store(value_type      * p) { ::scimd::store(p, val, T{}, category()); return p; }
 		value_type const* load (value_type const* p) { val = ::scimd::load(p, T{}, category()); return p; }
@@ -172,6 +136,57 @@ inline bool none(scimd::conditional_t<T> x) { return scimd::logical_none(x.val, 
 template <typename T>
 inline bool any(scimd::conditional_t<T> x) { return !none(x); }
 
+/* ----------------------------------------------------------
+ * 			Binary Arithmetic Operators
+ *---------------------------------------------------------*/
+template <typename T>
+scimd::pack<T> operator +(typename scimd::pack<T>::value_type x, scimd::pack<T> b) { return scimd::pack<T>(x) + b; }
+template <typename T>
+scimd::pack<T> operator -(typename scimd::pack<T>::value_type x, scimd::pack<T> b) { return scimd::pack<T>(x) - b; }
+template <typename T>
+scimd::pack<T> operator *(typename scimd::pack<T>::value_type x, scimd::pack<T> b) { return scimd::pack<T>(x) * b; }
+
+/* ----------------------------------------------------------
+ * 			scalar+pack Comparison Operators
+ *---------------------------------------------------------*/
+template <typename T>
+scimd::conditional_t<scimd::pack<T>> operator < (typename scimd::pack<T>::value_type x, scimd::pack<T> y) { return scimd::pack<T>{x}  < y; }
+template <typename T>
+scimd::conditional_t<scimd::pack<T>> operator > (typename scimd::pack<T>::value_type x, scimd::pack<T> y) { return scimd::pack<T>{x}  > y; }
+template <typename T>
+scimd::conditional_t<scimd::pack<T>> operator <=(typename scimd::pack<T>::value_type x, scimd::pack<T> y) { return scimd::pack<T>{x} <= y; }
+template <typename T>
+scimd::conditional_t<scimd::pack<T>> operator >=(typename scimd::pack<T>::value_type x, scimd::pack<T> y) { return scimd::pack<T>{x} >= y; }
+
+/* ----------------------------------------------------------
+ * 			Square-root Helpers
+ *---------------------------------------------------------*/
+template <typename T>
+struct sqrt_proxy {
+	T value;
+	explicit sqrt_proxy(T x) : value{x} {}
+	operator T() {
+		return scimd::sqrt(value.val, typename T::value_type{}, typename T::category());
+	}
+};
+
+// See the respective definitions of rsqrt for the relative errors.
+template <typename T>
+scimd::pack<T> rsqrt(scimd::pack<T> x) { return rsqrt(x.val, T{}, typename scimd::pack<T>::category()); }
+
+/*
+ * 	This allows code like `T x(4.0), y(2.0/sqrt(x));` to work correctly for
+ * 	all types and uses the rsqrt optimization for T=pack.
+ *
+ * 	If you just need 1.0 / sqrt(x), use rsqrt directly to avoid the extra mul.
+ */
+template <typename T>
+scimd::pack<T> operator/(scimd::pack<T> lhs, sqrt_proxy<scimd::pack<T>> rhs) { return lhs * rsqrt(rhs.value); }
+template <typename T>
+scimd::pack<T> operator/(typename scimd::pack<T>::value_type a, scimd::pack<T> b) { return scimd::pack<T>(a) / b; }
+template <typename T>
+scimd::pack<T> operator/(typename scimd::pack<T>::value_type a, sqrt_proxy<scimd::pack<T>> rhs) { return a * rsqrt(rhs.value); }
+
 /**
  * 	The converting constructor for pack<T> enables this overload in dangerous
  * 	ways (e.g., when `std::sqrt` isn't visible and T=float). Use TMP to disable
@@ -186,10 +201,10 @@ namespace {
 	template <typename T>
 	inline typename std::enable_if<
 						std::is_floating_point<T>::value,
-						scimd::sqrt_proxy<scimd::pack<T>>
+						sqrt_proxy<scimd::pack<T>>
 					>::type
 	sqrt(scimd::pack<T> a) {
-		return scimd::sqrt_proxy<scimd::pack<T>>(a);
+		return sqrt_proxy<scimd::pack<T>>(a);
 	}
 
 	template <typename T>
@@ -197,5 +212,5 @@ namespace {
 						std::is_floating_point<T>::value,
 						scimd::pack<T>
 					>::type
-	rsqrt(T x) { return rsqrt(scimd::pack<T>{x}); }
+	rsqrt(T x) { return ::rsqrt(scimd::pack<T>{x}); }
 }
