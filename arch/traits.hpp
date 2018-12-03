@@ -5,9 +5,6 @@
 namespace scimd {
 
 	template <typename T>
-	struct simd_category {};
-
-	template <typename T>
 	struct simd_type {};
 
 	template <typename T>

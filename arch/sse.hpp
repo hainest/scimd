@@ -6,14 +6,11 @@
 
 namespace scimd {
 
-	struct sse_float_tag {};
-	struct sse_double_tag {};
+	struct sse_tag {};
 
-	template<> struct is_sse<sse_float_tag> : std::true_type {};
-	template<> struct is_sse<sse_double_tag> : std::true_type {};
+	template<> struct is_sse<sse_tag> : std::true_type {};
 
-	template <> struct simd_category<float>  { using type = sse_float_tag; };
-	template <> struct simd_category<double> { using type = sse_double_tag; };
+	struct simd_category { using type = sse_tag; };
 
 	template <> struct simd_type<float>  { using type = __m128; };
 	template <> struct simd_type<double> { using type = __m128d; };
@@ -24,135 +21,135 @@ namespace scimd {
 	namespace {
 		template <typename T>
 		struct mask_t {};
-		template <> struct mask_t<sse_float_tag> { static const int value = 0xf; };
-		template <> struct mask_t<sse_double_tag> { static const int value = 0x3; };
+		template <> struct mask_t<float> { static const int value = 0xf; };
+		template <> struct mask_t<double> { static const int value = 0x3; };
 	}
 
 	/**
 	 * 	Tag dispatch is used here because the gcc ABI before gcc-4.9
 	 * 	does not properly mangle the SIMD types.
 	 */
-	static inline __m128 zero(sse_float_tag) {
+	static inline __m128 zero(float, sse_tag) {
 		return _mm_setzero_ps();
 	}
-	static inline __m128d zero(sse_double_tag) {
+	static inline __m128d zero(double, sse_tag) {
 		return _mm_setzero_pd();
 	}
-	static inline __m128 set1(float x, sse_float_tag) {
+	static inline __m128 set1(float x, float, sse_tag) {
 		return _mm_set1_ps(x);
 	}
-	static inline __m128d set1(double x, sse_double_tag) {
+	static inline __m128d set1(double x, double, sse_tag) {
 		return _mm_set1_pd(x);
 	}
 	/*************************************************************************/
-	static inline __m128 neg(__m128 x, sse_float_tag) {
+	static inline __m128 neg(__m128 x, float, sse_tag) {
 		return _mm_sub_ps(_mm_setzero_ps(), x);
 	}
-	static inline __m128d neg(__m128d x, sse_double_tag) {
+	static inline __m128d neg(__m128d x, double, sse_tag) {
 		return _mm_sub_pd(_mm_setzero_pd(), x);
 	}
-	static inline __m128 add(__m128 x, __m128 y, sse_float_tag) {
+	static inline __m128 add(__m128 x, __m128 y, float, sse_tag) {
 		return _mm_add_ps(x, y);
 	}
-	static inline __m128d add(__m128d x, __m128d y, sse_double_tag) {
+	static inline __m128d add(__m128d x, __m128d y, double, sse_tag) {
 		return _mm_add_pd(x, y);
 	}
-	static inline __m128 sub(__m128 x, __m128 y, sse_float_tag) {
+	static inline __m128 sub(__m128 x, __m128 y, float, sse_tag) {
 		return _mm_sub_ps(x, y);
 	}
-	static inline __m128d sub(__m128d x, __m128d y, sse_double_tag) {
+	static inline __m128d sub(__m128d x, __m128d y, double, sse_tag) {
 		return _mm_sub_pd(x, y);
 	}
-	static inline __m128 mul(__m128 x, __m128 y, sse_float_tag) {
+	static inline __m128 mul(__m128 x, __m128 y, float, sse_tag) {
 		return _mm_mul_ps(x, y);
 	}
-	static inline __m128d mul(__m128d x, __m128d y, sse_double_tag) {
+	static inline __m128d mul(__m128d x, __m128d y, double, sse_tag) {
 		return _mm_mul_pd(x, y);
 	}
-	static inline __m128 div(__m128 x, __m128 y, sse_float_tag) {
+	static inline __m128 div(__m128 x, __m128 y, float, sse_tag) {
 		return _mm_div_ps(x, y);
 	}
-	static inline __m128d div(__m128d x, __m128d y, sse_double_tag) {
+	static inline __m128d div(__m128d x, __m128d y, double, sse_tag) {
 		return _mm_div_pd(x, y);
 	}
 	/*************************************************************************/
-	static inline __m128 max(__m128 x, __m128 y, sse_float_tag) {
+	static inline __m128 max(__m128 x, __m128 y, float, sse_tag) {
 		return _mm_max_ps(x, y);
 	}
-	static inline __m128d max(__m128d x, __m128d y, sse_double_tag) {
+	static inline __m128d max(__m128d x, __m128d y, double, sse_tag) {
 		return _mm_max_pd(x, y);
 	}
-	static inline __m128 min(__m128 x, __m128 y, sse_float_tag) {
+	static inline __m128 min(__m128 x, __m128 y, float, sse_tag) {
 		return _mm_min_ps(x, y);
 	}
-	static inline __m128d min(__m128d x, __m128d y, sse_double_tag) {
+	static inline __m128d min(__m128d x, __m128d y, double, sse_tag) {
 		return _mm_min_pd(x, y);
 	}
 	/*************************************************************************/
-	static inline __m128 less(__m128 x, __m128 y, sse_float_tag) {
+	static inline __m128 less(__m128 x, __m128 y, float, sse_tag) {
 		return _mm_cmplt_ps(x, y);
 	}
-	static inline __m128d less(__m128d x, __m128d y, sse_double_tag) {
+	static inline __m128d less(__m128d x, __m128d y, double, sse_tag) {
 		return _mm_cmplt_pd(x, y);
 	}
-	static inline __m128 greater(__m128 x, __m128 y, sse_float_tag) {
+	static inline __m128 greater(__m128 x, __m128 y, float, sse_tag) {
 		return _mm_cmpgt_ps(x, y);
 	}
-	static inline __m128d greater(__m128d x, __m128d y, sse_double_tag) {
+	static inline __m128d greater(__m128d x, __m128d y, double, sse_tag) {
 		return _mm_cmpgt_pd(x, y);
 	}
-	static inline __m128 less_eq(__m128 x, __m128 y, sse_float_tag) {
+	static inline __m128 less_eq(__m128 x, __m128 y, float, sse_tag) {
 		return _mm_cmple_ps(x, y);
 	}
-	static inline __m128d less_eq(__m128d x, __m128d y, sse_double_tag) {
+	static inline __m128d less_eq(__m128d x, __m128d y, double, sse_tag) {
 		return _mm_cmple_pd(x, y);
 	}
-	static inline __m128 greater_eq(__m128 x, __m128 y, sse_float_tag) {
+	static inline __m128 greater_eq(__m128 x, __m128 y, float, sse_tag) {
 		return _mm_cmpge_ps(x, y);
 	}
-	static inline __m128d greater_eq(__m128d x, __m128d y, sse_double_tag) {
+	static inline __m128d greater_eq(__m128d x, __m128d y, double, sse_tag) {
 		return _mm_cmpge_pd(x, y);
 	}
 	/*************************************************************************/
-	static inline bool logical_all(__m128 x, sse_float_tag) {
-		return _mm_movemask_ps(x) == mask_t<sse_float_tag>::value;
+	static inline bool logical_all(__m128 x, float, sse_tag) {
+		return _mm_movemask_ps(x) == mask_t<float>::value;
 	}
-	static inline bool logical_all(__m128d x, sse_double_tag) {
-		return _mm_movemask_pd(x) == mask_t<sse_double_tag>::value;
+	static inline bool logical_all(__m128d x, double, sse_tag) {
+		return _mm_movemask_pd(x) == mask_t<double>::value;
 	}
-	static inline bool logical_none(__m128 x, sse_float_tag) {
+	static inline bool logical_none(__m128 x, float, sse_tag) {
 		return _mm_movemask_ps(x) == 0;
 	}
-	static inline bool logical_none(__m128d x, sse_double_tag) {
+	static inline bool logical_none(__m128d x, double, sse_tag) {
 		return _mm_movemask_pd(x) == 0;
 	}
 	/*************************************************************************/
-	static inline void store(float *p, __m128 x, sse_float_tag) {
+	static inline void store(float *p, __m128 x, float, sse_tag) {
 		_mm_storeu_ps(p, x);
 	}
-	static inline void store(double *p, __m128d x, sse_double_tag) {
+	static inline void store(double *p, __m128d x, double, sse_tag) {
 		_mm_storeu_pd(p, x);
 	}
-	static inline __m128 load(float const* p, sse_float_tag) {
+	static inline __m128 load(float const* p, float, sse_tag) {
 		return _mm_loadu_ps(p);
 	}
-	static inline __m128d load(double const* p, sse_double_tag) {
+	static inline __m128d load(double const* p, double, sse_tag) {
 		return _mm_loadu_pd(p);
 	}
-	static inline __m128 blend(__m128 x, __m128 y, __m128 mask, sse_float_tag) {
+	static inline __m128 blend(__m128 x, __m128 y, __m128 mask, float, sse_tag) {
 		return _mm_blendv_ps(x, y, mask);
 	}
-	static inline __m128d blend(__m128d x, __m128d y, __m128d mask, sse_double_tag) {
+	static inline __m128d blend(__m128d x, __m128d y, __m128d mask, double, sse_tag) {
 		return _mm_blendv_pd(x, y, mask);
 	}
 	/*************************************************************************/
-	static inline __m128 sqrt(__m128 x, sse_float_tag) {
+	static inline __m128 sqrt(__m128 x, float, sse_tag) {
 		return _mm_sqrt_ps(x);
 	}
-	static inline __m128d sqrt(__m128d x, sse_double_tag) {
+	static inline __m128d sqrt(__m128d x, double, sse_tag) {
 		return _mm_sqrt_pd(x);
 	}
-	static inline __m128 rsqrt(__m128 x, sse_float_tag) {
+	static inline __m128 rsqrt(__m128 x, float, sse_tag) {
 		/**
 		 * 	Do one Newton-Raphson iteration to bring the precision to ~23
 		 * 	bits (~2e-7). This works equally well on Bulldozer, Piledriver,
@@ -163,7 +160,7 @@ namespace scimd {
 		const __m128 muls = _mm_mul_ps(_mm_mul_ps(x, rsrt), rsrt);
 		return _mm_mul_ps(_mm_mul_ps(half, rsrt), _mm_sub_ps(three, muls));
 	}
-	static inline __m128d rsqrt(__m128d a, sse_double_tag) {
+	static inline __m128d rsqrt(__m128d a, double, sse_tag) {
 		/**
 		* 	This routine is adapted from
 		* 	https://github.com/stgatilov/recip_rsqrt_benchmark

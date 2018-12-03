@@ -25,7 +25,7 @@ namespace scimd {
 		T value;
 		explicit sqrt_proxy(T x) : value{x} {}
 		operator T() {
-			return sqrt(value.val, typename T::category());
+			return sqrt(value.val, typename T::value_type{}, typename T::category());
 		}
 	};
 
@@ -38,39 +38,39 @@ namespace scimd {
 	template <typename T>
 	struct pack {
 		using value_type = T;
-		using category = typename simd_category<value_type>::type;
+		using category = simd_category::type;
 		using simd_t = typename simd_type<value_type>::type;
 		static constexpr auto size = sizeof(simd_t) / sizeof(value_type);
 		using bool_t = typename bool_type<value_type>::type;
 
 		simd_t val;
 
-		pack() 		 : val(zero(category())) {}
+		pack() 		 : val(zero(T{}, category())) {}
 		pack(simd_t x) : val(x) {}
 
 		template <typename U, typename =
 				typename std::enable_if<
 					  std::is_floating_point<U>::value &&
 					 !is_scalar<category>::value, U>::type>
-		pack(U x) : val(set1(x, category())) {}
+		pack(U x) : val(set1(static_cast<T>(x), T{}, category())) {}
 
-		pack operator -()			const { return neg(val,        category()); }
-		pack operator +(pack x) const { return add(val, x.val, category()); }
-		pack operator -(pack x) const { return sub(val, x.val, category()); }
-		pack operator *(pack x) const { return mul(val, x.val, category()); }
-		pack operator /(pack x) const { return div(val, x.val, category()); }
+		pack operator -()		const { return neg(val, T{},        category()); }
+		pack operator +(pack x) const { return add(val, x.val, T{}, category()); }
+		pack operator -(pack x) const { return sub(val, x.val, T{}, category()); }
+		pack operator *(pack x) const { return mul(val, x.val, T{}, category()); }
+		pack operator /(pack x) const { return div(val, x.val, T{}, category()); }
 
-		pack operator +=(pack x) { val = add(val, x.val, category()); return *this; }
-		pack operator -=(pack x) { val = sub(val, x.val, category()); return *this; }
-		pack operator *=(pack x) { val = mul(val, x.val, category()); return *this; }
-		pack operator /=(pack x) { val = div(val, x.val, category()); return *this; }
+		pack operator +=(pack x) { val = add(val, x.val, T{}, category()); return *this; }
+		pack operator -=(pack x) { val = sub(val, x.val, T{}, category()); return *this; }
+		pack operator *=(pack x) { val = mul(val, x.val, T{}, category()); return *this; }
+		pack operator /=(pack x) { val = div(val, x.val, T{}, category()); return *this; }
 
 		friend pack operator +(value_type x, pack b) { return pack(x) + b; }
 		friend pack operator -(value_type x, pack b) { return pack(x) - b; }
 		friend pack operator *(value_type x, pack b) { return pack(x) * b; }
 
 		// See the respective definitions of rsqrt for the relative errors.
-		friend pack rsqrt(pack x) { return rsqrt(x.val, category()); }
+		friend pack rsqrt(pack x) { return rsqrt(x.val, T{}, category()); }
 
 		/*
 		 * 	This allows code like `T x(4.0), y(2.0/sqrt(x));` to work correctly for
@@ -87,20 +87,20 @@ namespace scimd {
 		friend typename std::enable_if<std::is_floating_point<U>::value, pack<U>>::type
 		operator /(value_type a, pack<U> b) { return pack<U>(a) / b; }
 
-		conditional_t<pack> operator < (pack x) const { return less	   (val, x.val, category()); }
-		conditional_t<pack> operator > (pack x) const { return greater    (val, x.val, category()); }
-		conditional_t<pack> operator <=(pack x) const { return less_eq    (val, x.val, category()); }
-		conditional_t<pack> operator >=(pack x) const { return greater_eq (val, x.val, category()); }
+		conditional_t<pack> operator < (pack x) const { return less       (val, x.val, T{}, category()); }
+		conditional_t<pack> operator > (pack x) const { return greater    (val, x.val, T{}, category()); }
+		conditional_t<pack> operator <=(pack x) const { return less_eq    (val, x.val, T{}, category()); }
+		conditional_t<pack> operator >=(pack x) const { return greater_eq (val, x.val, T{}, category()); }
 
 		friend conditional_t<pack> operator < (value_type x, pack y) { return pack{x}  < y; }
 		friend conditional_t<pack> operator > (value_type x, pack y) { return pack{x}  > y; }
 		friend conditional_t<pack> operator <=(value_type x, pack y) { return pack{x} <= y; }
 		friend conditional_t<pack> operator >=(value_type x, pack y) { return pack{x} >= y; }
 
-		value_type      * store(value_type      * p) { ::scimd::store(p, val, category()); return p; }
-		value_type const* load (value_type const* p) { val = ::scimd::load(p, category()); return p; }
+		value_type      * store(value_type      * p) { ::scimd::store(p, val, T{}, category()); return p; }
+		value_type const* load (value_type const* p) { val = ::scimd::load(p, T{}, category()); return p; }
 
-		pack blend(pack x, conditional_t<pack> mask) { val = ::scimd::blend(val, x.val, mask.val, category()); return *this; }
+		pack blend(pack x, conditional_t<pack> mask) { val = ::scimd::blend(val, x.val, mask.val, T{}, category()); return *this; }
 
 		template <typename FwdIter, typename UnaryFunc>
 		FwdIter load(FwdIter beg, FwdIter end, UnaryFunc f, value_type default_val = value_type{}) {
@@ -113,7 +113,7 @@ namespace scimd {
 			for(; i < size; i++) {
 				arr[i] = default_val;
 			}
-			val = ::scimd::load(arr, category{});
+			val = ::scimd::load(arr, T{}, category{});
 			return beg;
 		}
 
@@ -143,11 +143,11 @@ namespace scimd {
  *---------------------------------------------------------*/
 template <typename T>
 inline scimd::pack<T> max(scimd::pack<T> x, scimd::pack<T> b) {
-	return scimd::max(x.val, b.val, typename scimd::pack<T>::category());
+	return scimd::max(x.val, b.val, typename scimd::pack<T>::value_type{}, typename scimd::pack<T>::category());
 }
 template <typename T>
 inline scimd::pack<T> min(scimd::pack<T> x, scimd::pack<T> b) {
-	return scimd::min(x.val, b.val, typename scimd::pack<T>::category());
+	return scimd::min(x.val, b.val, typename scimd::pack<T>::value_type{}, typename scimd::pack<T>::category());
 }
 template <typename T>
 typename std::enable_if<!scimd::is_avx512<T>::value, scimd::pack<T>>::type
@@ -159,16 +159,16 @@ inline abs(scimd::pack<T> x) {
 template <typename T>
 typename std::enable_if<scimd::is_avx512<T>::value, scimd::pack<T>>::type
 inline abs(scimd::pack<T> x) {
-	return abs(x, typename scimd::pack<T>::category());
+	return abs(x, typename scimd::pack<T>::value_type{}, typename scimd::pack<T>::category());
 }
 
 /* ----------------------------------------------------------
  * 			Logical Functions
  *---------------------------------------------------------*/
 template <typename T>
-inline bool all(scimd::conditional_t<T> x) { return scimd::logical_all(x.val, typename T::category()); }
+inline bool all(scimd::conditional_t<T> x) { return scimd::logical_all(x.val, typename T::value_type{}, typename T::category()); }
 template <typename T>
-inline bool none(scimd::conditional_t<T> x) { return scimd::logical_none(x.val, typename T::category()); }
+inline bool none(scimd::conditional_t<T> x) { return scimd::logical_none(x.val, typename T::value_type{}, typename T::category()); }
 template <typename T>
 inline bool any(scimd::conditional_t<T> x) { return !none(x); }
 
