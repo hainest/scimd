@@ -36,17 +36,6 @@ namespace scimd {
 	};
 
 	template <typename T>
-	bool all(conditional_t<T> x) { return logical_all(x.val, typename T::category()); }
-	template <typename T>
-	bool none(conditional_t<T> x) { return logical_none(x.val, typename T::category()); }
-	template <typename T>
-	bool any(conditional_t<T> x) { return !none(x); }
-
-	bool all(bool x) { return x; }
-	bool none(bool x) { return !x; }
-	bool any(bool x) { return !none(x); }
-
-	template <typename T>
 	struct pack {
 		using value_type = T;
 		using category = typename simd_category<value_type>::type;
@@ -172,6 +161,16 @@ typename std::enable_if<scimd::detail::is_avx512<T>::value, scimd::pack<T>>::typ
 inline abs(scimd::pack<T> x) {
 	return abs(x, typename scimd::pack<T>::category());
 }
+
+/* ----------------------------------------------------------
+ * 			Logical Functions
+ *---------------------------------------------------------*/
+template <typename T>
+inline bool all(scimd::conditional_t<T> x) { return scimd::logical_all(x.val, typename T::category()); }
+template <typename T>
+inline bool none(scimd::conditional_t<T> x) { return scimd::logical_none(x.val, typename T::category()); }
+template <typename T>
+inline bool any(scimd::conditional_t<T> x) { return !none(x); }
 
 /**
  * 	The converting constructor for pack<T> enables this overload in dangerous

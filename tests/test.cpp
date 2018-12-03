@@ -7,6 +7,11 @@
 #include <array>
 #include <algorithm>
 
+// These will eventually be replaced by versions from the standard library
+bool all(bool x) { return x; }
+bool none(bool x) { return !x; }
+bool any(bool x) { return !none(x); }
+
 template <typename T>
 struct fp_tol{};
 template <> struct fp_tol<float> { static constexpr float value = 2e-07; };
@@ -38,7 +43,7 @@ void test_memory() {
 		asm volatile("scimd_load_lambda_end%=:" :);
 
 		// x and y should be equal to within FP tolerance
-		REQUIRE(scimd::all((x-y) <= tol));
+		REQUIRE(all((x-y) <= tol));
 
 		std::array<T,N> out_lambda;
 		x.store(std::begin(out_lambda), std::end(out_lambda), [](T &x, T y) {x = y;});
@@ -108,13 +113,13 @@ void test_mixed_mode(T x, U y, std::string const& name, answer<T, U> const& ans,
 		asm volatile("arith_end%=:" :);
 
 		// These are split out so that analyzing the objdump is easier
-		REQUIRE(scimd::all(s));
-		REQUIRE(scimd::all(d));
-		REQUIRE(scimd::all(p));
-		REQUIRE(scimd::all(q));
-		REQUIRE(scimd::all(m));
-		REQUIRE(scimd::all(n));
-		REQUIRE(scimd::all(o));
+		REQUIRE(all(s));
+		REQUIRE(all(d));
+		REQUIRE(all(p));
+		REQUIRE(all(q));
+		REQUIRE(all(m));
+		REQUIRE(all(n));
+		REQUIRE(all(o));
 	}
 }
 
@@ -148,41 +153,41 @@ void test_operators() {
 	scimd::pack<T> const x{0.1}, y{0.2};
 
 	SECTION("arithmetic operators for T = " + std::string{fp_name<T>::value}) {
-		REQUIRE(scimd::all((-x - (-x)) <= tol));
-		REQUIRE(scimd::all(((x + T{}) - x) <= tol));
-		REQUIRE(scimd::all(((x + y) - (x) - (y)) <= tol));
-		REQUIRE(scimd::all(((x - y) - (x) + (y)) <= tol));
-		REQUIRE(scimd::all(((x * y) - (x * y)) <= tol));
-		REQUIRE(scimd::all(((x / y) - (x / y)) <= tol));
+		REQUIRE(all((-x - (-x)) <= tol));
+		REQUIRE(all(((x + T{}) - x) <= tol));
+		REQUIRE(all(((x + y) - (x) - (y)) <= tol));
+		REQUIRE(all(((x - y) - (x) + (y)) <= tol));
+		REQUIRE(all(((x * y) - (x * y)) <= tol));
+		REQUIRE(all(((x / y) - (x / y)) <= tol));
 	}
 
 	SECTION("in-place arithmetic operators for T = " + std::string{fp_name<T>::value}) {
-		REQUIRE(scimd::all(((scimd::pack<T>{y} += x) - (y + x)) <= tol));
-		REQUIRE(scimd::all(((scimd::pack<T>{y} -= x) - (y - x)) <= tol));
-		REQUIRE(scimd::all(((scimd::pack<T>{y} *= x) - (y * x)) <= tol));
-		REQUIRE(scimd::all(((scimd::pack<T>{y} /= x) - (y / x)) <= tol));
+		REQUIRE(all(((scimd::pack<T>{y} += x) - (y + x)) <= tol));
+		REQUIRE(all(((scimd::pack<T>{y} -= x) - (y - x)) <= tol));
+		REQUIRE(all(((scimd::pack<T>{y} *= x) - (y * x)) <= tol));
+		REQUIRE(all(((scimd::pack<T>{y} /= x) - (y / x)) <= tol));
 	}
 
 	SECTION("logical operators for T = " + std::string{fp_name<T>::value}) {
-		REQUIRE(scimd::all(y > x));
-		REQUIRE(scimd::none(y < x));
-		REQUIRE(scimd::any(y >= x));
-		REQUIRE(!scimd::any(y <= x));
+		REQUIRE(all(y > x));
+		REQUIRE(none(y < x));
+		REQUIRE(any(y >= x));
+		REQUIRE(!any(y <= x));
 	}
 
 	SECTION("vector+scalar logical operators for T = " + std::string{fp_name<T>::value}) {
-		REQUIRE(scimd::all(y > T{0.0}));
-		REQUIRE(scimd::none(y < T{0.0}));
-		REQUIRE(scimd::any(y >= T{0.0}));
-		REQUIRE(!scimd::any(y <= T{0.0}));
+		REQUIRE(all(y > T{0.0}));
+		REQUIRE(none(y < T{0.0}));
+		REQUIRE(any(y >= T{0.0}));
+		REQUIRE(!any(y <= T{0.0}));
 	}
 
 	SECTION("range operators for T = " + std::string{fp_name<T>::value}) {
 		// These assume x and y are positive and y>x
-		REQUIRE(scimd::all((max(x, y) - y) <= tol));
-		REQUIRE(scimd::all((min(x, y) - x) <= tol));
-		REQUIRE(scimd::all(abs(x) >= x));
-		REQUIRE(scimd::all(abs(-x) >= x));
+		REQUIRE(all((max(x, y) - y) <= tol));
+		REQUIRE(all((min(x, y) - x) <= tol));
+		REQUIRE(all(abs(x) >= x));
+		REQUIRE(all(abs(-x) >= x));
 	}
 }
 
