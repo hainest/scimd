@@ -4,6 +4,7 @@
 #include <cmath>
 #include <algorithm>
 #include "traits.hpp"
+#include "memory.hpp"
 
 namespace scimd {
 
@@ -118,16 +119,28 @@ namespace scimd {
 		return !x;
 	}
 	/*************************************************************************/
-	static inline void store(float *p, float x, float, scalar_tag) {
+	static inline void store(float *p, float x, float, scalar_tag, memory::aligned) {
 		*p = x;
 	}
-	static inline void store(double *p, double x, double, scalar_tag) {
+	static inline void store(float *p, float x, float, scalar_tag, memory::unaligned) {
 		*p = x;
 	}
-	static inline float load(float const* p, float, scalar_tag) {
+	static inline void store(double *p, double x, double, scalar_tag, memory::aligned) {
+		*p = x;
+	}
+	static inline void store(double *p, double x, double, scalar_tag, memory::unaligned) {
+		*p = x;
+	}
+	static inline float load(float const* p, float, scalar_tag, memory::unaligned) {
 		return *p;
 	}
-	static inline double load(double const* p, double, scalar_tag) {
+	static inline float load(float const* p, float, scalar_tag, memory::aligned) {
+		return *p;
+	}
+	static inline double load(double const* p, double, scalar_tag, memory::unaligned) {
+		return *p;
+	}
+	static inline double load(double const* p, double, scalar_tag, memory::aligned) {
 		return *p;
 	}
 	static inline float blend(float x, float y, bool mask, float, scalar_tag) {

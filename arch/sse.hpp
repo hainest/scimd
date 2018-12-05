@@ -1,8 +1,9 @@
 #pragma once
 
 #include <nmmintrin.h>
-#include "traits.hpp"
 #include <cstdint>
+#include "traits.hpp"
+#include "memory.hpp"
 
 namespace scimd {
 
@@ -124,17 +125,29 @@ namespace scimd {
 		return _mm_movemask_pd(x) == 0;
 	}
 	/*************************************************************************/
-	static inline void store(float *p, __m128 x, float, sse_tag) {
+	static inline void store(float *p, __m128 x, float, sse_tag, memory::unaligned) {
 		_mm_storeu_ps(p, x);
 	}
-	static inline void store(double *p, __m128d x, double, sse_tag) {
+	static inline void store(float *p, __m128 x, float, sse_tag, memory::aligned) {
+		_mm_store_ps(p, x);
+	}
+	static inline void store(double *p, __m128d x, double, sse_tag, memory::unaligned) {
 		_mm_storeu_pd(p, x);
 	}
-	static inline __m128 load(float const* p, float, sse_tag) {
+	static inline void store(double *p, __m128d x, double, sse_tag, memory::aligned) {
+		_mm_store_pd(p, x);
+	}
+	static inline __m128 load(float const* p, float, sse_tag, memory::unaligned) {
 		return _mm_loadu_ps(p);
 	}
-	static inline __m128d load(double const* p, double, sse_tag) {
+	static inline __m128 load(float const* p, float, sse_tag, memory::aligned) {
+		return _mm_load_ps(p);
+	}
+	static inline __m128d load(double const* p, double, sse_tag, memory::unaligned) {
 		return _mm_loadu_pd(p);
+	}
+	static inline __m128d load(double const* p, double, sse_tag, memory::aligned) {
+		return _mm_load_pd(p);
 	}
 	static inline __m128 blend(__m128 x, __m128 y, __m128 mask, float, sse_tag) {
 		return _mm_blendv_ps(x, y, mask);

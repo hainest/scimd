@@ -26,8 +26,57 @@ template <typename T>
 void test_memory() {
 	constexpr auto tol = fp_tol<T>::value;
 	constexpr auto N = scimd::pack<T>::size;
-	std::array<T, N> input;
+	alignas(scimd::pack<T>) std::array<T, N> input;
 	std::iota(std::begin(input), std::end(input), 0.0f);
+
+	auto is_same = [](std::array<T, N> const& in, std::array<T, N> const& out) -> bool {
+		return std::equal(
+			std::begin(out),
+			std::end(out),
+			std::begin(in),
+			[](T x, T y) { return (x-y) <= tol; }
+		);
+	};
+
+	SECTION("alignment load/store for T = " + std::string{fp_name<T>::value}) {
+		alignas(scimd::pack<T>) std::array<T,N> out;
+
+		// Default load/store
+		scimd::pack<T> x;
+		REQUIRE(x.load(input.data()) == (std::begin(input) + N));
+		REQUIRE(x.store(out.data()) == std::end(out));
+		REQUIRE(is_same(input, out));
+
+		// unaligned load, default store
+		REQUIRE(x.load(scimd::memory::unaligned{}, input.data()) == (std::begin(input) + N));
+		REQUIRE(x.store(out.data()) == std::end(out));
+		REQUIRE(is_same(input, out));
+
+		// aligned load, default store
+		REQUIRE(x.load(scimd::memory::aligned{}, input.data()) == (std::begin(input) + N));
+		REQUIRE(x.store(out.data()) == std::end(out));
+		REQUIRE(is_same(input, out));
+
+		// default load, unaligned store
+		REQUIRE(x.load(input.data()) == (std::begin(input) + N));
+		REQUIRE(x.store(scimd::memory::unaligned{}, out.data()) == std::end(out));
+		REQUIRE(is_same(input, out));
+
+		// default load, aligned store
+		REQUIRE(x.load(input.data()) == (std::begin(input) + N));
+		REQUIRE(x.store(scimd::memory::unaligned{}, out.data()) == std::end(out));
+		REQUIRE(is_same(input, out));
+
+		// aligned load, aligned store
+		REQUIRE(x.load(scimd::memory::aligned{}, input.data()) == (std::begin(input) + N));
+		REQUIRE(x.store(scimd::memory::aligned{}, out.data()) == std::end(out));
+		REQUIRE(is_same(input, out));
+
+		// unaligned load, unaligned store
+		REQUIRE(x.load(scimd::memory::unaligned{}, input.data()) == (std::begin(input) + N));
+		REQUIRE(x.store(scimd::memory::unaligned{}, out.data()) == std::end(out));
+		REQUIRE(is_same(input, out));
+	}
 
 	SECTION("load/store for T = " + std::string{fp_name<T>::value}) {
 		// use simple load of N values
@@ -45,21 +94,12 @@ void test_memory() {
 		// x and y should be equal to within FP tolerance
 		REQUIRE(all((x-y) <= tol));
 
-		std::array<T,N> out_lambda;
+		alignas(scimd::pack<T>) std::array<T,N> out_lambda;
 		x.store(std::begin(out_lambda), std::end(out_lambda), [](T &x, T y) {x = y;});
 
-		std::array<T, N> out_plain;
+		alignas(scimd::pack<T>) std::array<T, N> out_plain;
 		x.store(out_plain.data());
-
-		// Ensure the stored values are the same to within FP tolerance
-		auto const is_same =
-			std::equal(
-				std::begin(out_lambda),
-				std::end(out_lambda),
-				std::begin(out_plain),
-				[](T x, T y) { return (x-y) <= tol; }
-			);
-		REQUIRE(is_same);
+		REQUIRE(is_same(out_lambda, out_plain));
 	}
 
 	SECTION("load/store with default for T = " + std::string{fp_name<T>::value}) {
@@ -70,23 +110,14 @@ void test_memory() {
 		x.load(std::end(input)-1, std::end(input), [](T x) {return x;});
 		asm volatile("scimd_load_lambda_def_end%=:" :);
 
-		std::array<T,N> output;
+		alignas(scimd::pack<T>) std::array<T,N> output;
 		x.store(output.data());
 
 		// The first element should be the last value in 'input'
 		// The rest should be T{} (the default)
-		std::array<T,N> expected = {{T{}}};
+		alignas(scimd::pack<T>) std::array<T,N> expected = {{T{}}};
 		expected[0] = *(std::end(input)-1);
-
-		// Ensure the stored values are the same to within FP tolerance
-		auto const is_same =
-			std::equal(
-				std::begin(output),
-				std::end(output),
-				std::begin(expected),
-				[](T x, T y) { return (x-y) <= tol; }
-			);
-		REQUIRE(is_same);
+		REQUIRE(is_same(output, expected));
 	}
 }
 

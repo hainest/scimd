@@ -1,8 +1,9 @@
 #pragma once
 
 #include <immintrin.h>
-#include "traits.hpp"
 #include <cstdint>
+#include "traits.hpp"
+#include "memory.hpp"
 
 namespace scimd {
 
@@ -124,17 +125,29 @@ namespace scimd {
 		return _mm256_movemask_pd(x) == 0;
 	}
 	/*************************************************************************/
-	static inline void store(float *p, __m256 x, float, avx_tag) {
+	static inline void store(float *p, __m256 x, float, avx_tag, memory::unaligned) {
 		_mm256_storeu_ps(p, x);
 	}
-	static inline void store(double *p, __m256d x, double, avx_tag) {
+	static inline void store(float *p, __m256 x, float, avx_tag, memory::aligned) {
+		_mm256_store_ps(p, x);
+	}
+	static inline void store(double *p, __m256d x, double, avx_tag, memory::unaligned) {
 		_mm256_storeu_pd(p, x);
 	}
-	static inline __m256 load(float const* p, float, avx_tag) {
+	static inline void store(double *p, __m256d x, double, avx_tag, memory::aligned) {
+		_mm256_store_pd(p, x);
+	}
+	static inline __m256 load(float const* p, float, avx_tag, memory::unaligned) {
 		return _mm256_loadu_ps(p);
 	}
-	static inline __m256d load(double const* p, double, avx_tag) {
+	static inline __m256 load(float const* p, float, avx_tag, memory::aligned) {
+		return _mm256_load_ps(p);
+	}
+	static inline __m256d load(double const* p, double, avx_tag, memory::unaligned) {
 		return _mm256_loadu_pd(p);
+	}
+	static inline __m256d load(double const* p, double, avx_tag, memory::aligned) {
+		return _mm256_load_pd(p);
 	}
 	static inline __m256 blend(__m256 x, __m256 y, __m256 mask, float, avx_tag) {
 		return _mm256_blendv_ps(x, y, mask);

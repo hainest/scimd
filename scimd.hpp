@@ -17,6 +17,7 @@
 #endif
 
 #include "arch/traits.hpp"
+#include "memory.hpp"
 
 namespace scimd {
 
@@ -36,7 +37,7 @@ namespace scimd {
 
 		simd_t val;
 
-		pack() 		 : val(zero(T{}, category{})) {}
+		pack()           : val(zero(T{}, category{})) {}
 		pack(simd_t x) : val(x) {}
 
 		template <typename U, typename =
@@ -44,6 +45,8 @@ namespace scimd {
 					  std::is_floating_point<U>::value &&
 					 !is_scalar<category>::value, U>::type>
 		pack(U x) : val(set1(static_cast<T>(x), T{}, category{})) {}
+
+		~pack() noexcept {}
 
 		pack operator -()		const { return neg(val, T{},        category{}); }
 		pack operator +(pack x) const { return add(val, x.val, T{}, category{}); }
@@ -61,14 +64,38 @@ namespace scimd {
 		conditional_t<pack> operator <=(pack x) const { return less_eq    (val, x.val, T{}, category{}); }
 		conditional_t<pack> operator >=(pack x) const { return greater_eq (val, x.val, T{}, category{}); }
 
-		value_type      * store(value_type      * p) { ::scimd::store(p, val, T{}, category{}); return p; }
-		value_type const* load (value_type const* p) { val = ::scimd::load(p, T{}, category{}); return p; }
+		pack blend(pack x, conditional_t<pack> mask) {
+			val = ::scimd::blend(val, x.val, mask.val, T{}, category{});
+			return *this;
+		}
 
-		pack blend(pack x, conditional_t<pack> mask) { val = ::scimd::blend(val, x.val, mask.val, T{}, category{}); return *this; }
+		/* ----------------------------------------------------------
+		 * 			Load methods
+		 *---------------------------------------------------------*/
+	private:
+		template <typename align_t>
+		value_type const* load(value_type const* p, align_t) {
+			val = ::scimd::load(p, T{}, category{}, align_t{});
+			return p + size;
+		}
+	public:
+		/**
+		 * \brief Directly load a pack from memory
+		 *
+		 * \warn These assume the memory is compact!
+		 */
+		value_type const* load(                   value_type const* p) { return this->load(p, memory::unaligned{}); }
+		value_type const* load(memory::unaligned, value_type const* p) { return this->load(p, memory::unaligned{}); }
+		value_type const* load(memory::aligned,   value_type const* p) { return this->load(p, memory::aligned{}); }
 
+		/**
+		 * \brief Load a pack from memory using the supplied function
+		 *
+		 * This is primarily intended for AoS->SoA conversions as it has very high overhead compared to `load(T*)`.
+		 */
 		template <typename FwdIter, typename UnaryFunc>
-		FwdIter load(FwdIter beg, FwdIter end, UnaryFunc f, value_type default_val = value_type{}) {
-			value_type arr[size];
+		FwdIter load(memory::ragged, FwdIter beg, FwdIter end, UnaryFunc f, value_type default_val) {
+			alignas(pack) value_type arr[size];
 			size_t i = 0;
 			for(; i < size && beg != end; i++) {
 				arr[i] = f(*beg);
@@ -77,27 +104,86 @@ namespace scimd {
 			for(; i < size; i++) {
 				arr[i] = default_val;
 			}
-			val = ::scimd::load(arr, T{}, category{});
+			val = ::scimd::load(arr, T{}, category{}, memory::aligned{});
+			std::advance(beg, size);
 			return beg;
 		}
+		template <typename FwdIter, typename UnaryFunc>
+		FwdIter load(memory::compact, FwdIter beg, FwdIter end, UnaryFunc f, value_type) {
+			alignas(pack) value_type arr[size];
+			for(size_t i = 0; i < size; i++) {
+				arr[i] = f(*beg);
+				++beg;
+			}
+			(void)end;
+			val = ::scimd::load(arr, T{}, category{}, memory::aligned{});
+			std::advance(beg, size);
+			return beg;
+		}
+		template <typename FwdIter, typename UnaryFunc>
+		FwdIter load(FwdIter beg, FwdIter end, UnaryFunc f, value_type default_val = value_type{}) {
+			return this->load(memory::ragged{}, beg, end, f, default_val);
+		}
 
+		/* ----------------------------------------------------------
+		 * 			Store methods
+		 *---------------------------------------------------------*/
+	private:
+		template <typename align_t>
+		value_type* store(value_type* p, align_t) {
+			::scimd::store(p, val, T{}, category{}, align_t{});
+			return p + size;
+		}
+	public:
+		value_type* store(                   value_type* p) { return this->store(p, memory::unaligned{}); }
+		value_type* store(memory::unaligned, value_type* p) { return this->store(p, memory::unaligned{}); }
+		value_type* store(memory::aligned,   value_type* p) { return this->store(p, memory::aligned{}); }
+
+		/* --- Scalar versions --- */
 		template <typename FwdIter, typename BinaryFunc>
 		typename std::enable_if<is_scalar<category>::value, FwdIter>::type
 		store(FwdIter beg, FwdIter end, BinaryFunc f) {
 			f(*beg, val);
 			++beg;
 			(void)end;
+			std::advance(beg, size);
 			return beg;
 		}
+		template <typename FwdIter, typename BinaryFunc>
+		typename std::enable_if<is_scalar<category>::value, FwdIter>::type
+		store(memory::ragged, FwdIter beg, FwdIter end, BinaryFunc f) {
+			return this->store(beg, end, f);
+		}
+		template <typename FwdIter, typename BinaryFunc>
+		typename std::enable_if<is_scalar<category>::value, FwdIter>::type
+		store(memory::compact, FwdIter beg, FwdIter end, BinaryFunc f) {
+			return this->store(beg, end, f);
+		}
 
+		/* --- Vector versions --- */
 		template <typename FwdIter, typename BinaryFunc>
 		typename std::enable_if<!is_scalar<category>::value, FwdIter>::type
-		store(FwdIter beg, FwdIter end, BinaryFunc f) {
+		store(memory::ragged, FwdIter beg, FwdIter end, BinaryFunc f) {
 			for(size_t i = 0; i < size && beg != end; i++) {
 				f(*beg, val[i]);
 				++beg;
 			}
 			return beg;
+		}
+		template <typename FwdIter, typename BinaryFunc>
+		typename std::enable_if<!is_scalar<category>::value, FwdIter>::type
+		store(memory::compact, FwdIter beg, FwdIter end, BinaryFunc f) {
+			for(size_t i = 0; i < size; i++) {
+				f(*beg, val[i]);
+				++beg;
+			}
+			(void)end;
+			return beg;
+		}
+		template <typename FwdIter, typename BinaryFunc>
+		typename std::enable_if<!is_scalar<category>::value, FwdIter>::type
+		store(FwdIter beg, FwdIter end, BinaryFunc f) {
+			return this->store(memory::ragged{}, beg, end, f);
 		}
 	};
 }

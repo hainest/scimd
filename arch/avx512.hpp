@@ -1,8 +1,9 @@
 #pragma once
 
 #include <immintrin.h>
-#include "traits.hpp"
 #include <cstdint>
+#include "traits.hpp"
+#include "memory.hpp"
 
 namespace scimd {
 
@@ -150,17 +151,29 @@ namespace scimd {
 		return _mm512_kand(mask_t<double>::value, x) == 0;
 	}
 	/*************************************************************************/
-	static inline void store(float *p, __m512 x, float, avx512_tag) {
+	static inline void store(float *p, __m512 x, float, avx512_tag, memory::unaligned) {
 		_mm512_storeu_ps(p, x);
 	}
-	static inline void store(double *p, __m512d x, double, avx512_tag) {
+	static inline void store(float *p, __m512 x, float, avx512_tag, memory::aligned) {
+		_mm512_store_ps(p, x);
+	}
+	static inline void store(double *p, __m512d x, double, avx512_tag, memory::unaligned) {
 		_mm512_storeu_pd(p, x);
 	}
-	static inline __m512 load(float const* p, float, avx512_tag) {
+	static inline void store(double *p, __m512d x, double, avx512_tag, memory::aligned) {
+		_mm512_store_pd(p, x);
+	}
+	static inline __m512 load(float const* p, float, avx512_tag, memory::unaligned) {
 		return _mm512_loadu_ps(p);
 	}
-	static inline __m512d load(double const* p, double, avx512_tag) {
+	static inline __m512 load(float const* p, float, avx512_tag, memory::aligned) {
+		return _mm512_load_ps(p);
+	}
+	static inline __m512d load(double const* p, double, avx512_tag, memory::unaligned) {
 		return _mm512_loadu_pd(p);
+	}
+	static inline __m512d load(double const* p, double, avx512_tag, memory::aligned) {
+		return _mm512_load_pd(p);
 	}
 	static inline __m512 blend(__m512 x, __m512 y, __mmask16 mask, float, avx512_tag) {
 		return _mm512_mask_blend_ps(mask, x, y);
