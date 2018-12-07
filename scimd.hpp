@@ -37,7 +37,7 @@ namespace scimd {
 
 		simd_t val;
 
-		pack()           : val(zero(T{}, category{})) {}
+		explicit pack() : val(zero(T{}, category{})) {}
 		pack(simd_t x) : val(x) {}
 
 		template <typename U, typename =
